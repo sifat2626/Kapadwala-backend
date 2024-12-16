@@ -151,18 +151,103 @@ const getAllDeals = async (query: any): Promise<any> => {
 
 // Fetch Top Deals
 const getTopDeals = async (): Promise<any[]> => {
-  return await Deal.aggregate([
-    { $match: { isActive: true } },
-    { $sort: { percentage: -1 } },
+  // Step 1: Find the best cashback deals
+  const cashbackDeals = await Deal.aggregate([
+    { $match: { type: 'cashback', isActive: true } }, // Only active cashback deals
+    { $sort: { percentage: -1 } }, // Sort by highest percentage
     {
       $group: {
-        _id: { companyId: '$companyId', vendorId: '$vendorId' },
-        topDeal: { $first: '$$ROOT' },
+        _id: '$companyId', // Group by company
+        bestCashbackDeal: { $first: '$$ROOT' }, // Pick the best cashback deal for each company
       },
     },
-    { $replaceRoot: { newRoot: '$topDeal' } },
-  ]).exec();
+  ]);
+
+  // Step 2: Find the best gift card deals
+  const giftcardDeals = await Deal.aggregate([
+    { $match: { type: 'giftcard', isActive: true } }, // Only active gift card deals
+    { $sort: { percentage: -1 } }, // Sort by highest percentage
+    {
+      $group: {
+        _id: '$companyId', // Group by company
+        bestGiftcardDeal: { $first: '$$ROOT' }, // Pick the best gift card deal for each company
+      },
+    },
+  ]);
+
+  // Step 3: Find Amex and Chase deals
+  const creditCardDeals = await Deal.aggregate([
+    {
+      $match: {
+        type: 'creditcard',
+        isActive: true,
+        companyId: { $in: ['AmexID', 'ChaseID'] }, // Replace with actual Amex and Chase IDs
+      },
+    },
+    { $sort: { percentage: -1 } }, // Sort by highest percentage
+  ]);
+
+  // Step 4: Combine all the information by company
+  const topDealsByCompany: any[] = [];
+
+  const cashbackMap = new Map<string, any>();
+  const giftcardMap = new Map<string, any>();
+
+  cashbackDeals.forEach((deal) => cashbackMap.set(deal._id.toString(), deal.bestCashbackDeal));
+  giftcardDeals.forEach((deal) => giftcardMap.set(deal._id.toString(), deal.bestGiftcardDeal));
+
+  const companyIds = [...new Set([...cashbackMap.keys(), ...giftcardMap.keys()])];
+  const companies = await Company.find({ _id: { $in: companyIds } });
+
+  for (const company of companies) {
+    const companyId = company._id.toString();
+    const bestCashbackDeal = cashbackMap.get(companyId);
+    const bestGiftcardDeal = giftcardMap.get(companyId);
+
+    // Filter credit card deals for this company
+    const relevantCreditCardDeals = creditCardDeals.filter(
+      (deal) => deal.companyId.toString() === companyId
+    );
+
+    // Determine the top rate for sorting
+    const bestRate = Math.max(
+      bestCashbackDeal?.percentage || 0,
+      bestGiftcardDeal?.percentage || 0
+    );
+
+    topDealsByCompany.push({
+      company: {
+        id: companyId,
+        name: company.name,
+      },
+      bestRate, // Use this for sorting
+      bestCashbackDeal: bestCashbackDeal
+        ? {
+          vendor: await Vendor.findById(bestCashbackDeal.vendorId),
+          percentage: bestCashbackDeal.percentage,
+          link: bestCashbackDeal.link,
+        }
+        : null,
+      bestGiftcardDeal: bestGiftcardDeal
+        ? {
+          vendor: await Vendor.findById(bestGiftcardDeal.vendorId),
+          percentage: bestGiftcardDeal.percentage,
+          link: bestGiftcardDeal.link,
+        }
+        : null,
+      creditCardDeals: relevantCreditCardDeals.map((deal) => ({
+        type: deal.type,
+        percentage: deal.percentage,
+        link: deal.link,
+      })),
+    });
+  }
+
+  // Step 5: Sort companies by the best rate in descending order
+  return topDealsByCompany.sort((a, b) => b.bestRate - a.bestRate);
 };
+
+
 
 // Helper: Get Vendor ID by Name
 const getVendorIdByName = async (name: string): Promise<string | null> => {

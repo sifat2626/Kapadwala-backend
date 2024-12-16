@@ -138,17 +138,84 @@ const getAllDeals = (query) => __awaiter(void 0, void 0, void 0, function* () {
 });
 // Fetch Top Deals
 const getTopDeals = () => __awaiter(void 0, void 0, void 0, function* () {
-    return yield deals_model_1.Deal.aggregate([
-        { $match: { isActive: true } },
-        { $sort: { percentage: -1 } },
+    // Step 1: Find the best cashback deals
+    const cashbackDeals = yield deals_model_1.Deal.aggregate([
+        { $match: { type: 'cashback', isActive: true } }, // Only active cashback deals
+        { $sort: { percentage: -1 } }, // Sort by highest percentage
         {
             $group: {
-                _id: { companyId: '$companyId', vendorId: '$vendorId' },
-                topDeal: { $first: '$$ROOT' },
+                _id: '$companyId', // Group by company
+                bestCashbackDeal: { $first: '$$ROOT' }, // Pick the best cashback deal for each company
             },
         },
-        { $replaceRoot: { newRoot: '$topDeal' } },
-    ]).exec();
+    ]);
+    // Step 2: Find the best gift card deals
+    const giftcardDeals = yield deals_model_1.Deal.aggregate([
+        { $match: { type: 'giftcard', isActive: true } }, // Only active gift card deals
+        { $sort: { percentage: -1 } }, // Sort by highest percentage
+        {
+            $group: {
+                _id: '$companyId', // Group by company
+                bestGiftcardDeal: { $first: '$$ROOT' }, // Pick the best gift card deal for each company
+            },
+        },
+    ]);
+    // Step 3: Find Amex and Chase deals
+    const creditCardDeals = yield deals_model_1.Deal.aggregate([
+        {
+            $match: {
+                type: 'creditcard',
+                isActive: true,
+                companyId: { $in: ['AmexID', 'ChaseID'] }, // Replace with actual Amex and Chase IDs
+            },
+        },
+        { $sort: { percentage: -1 } }, // Sort by highest percentage
+    ]);
+    // Step 4: Combine all the information by company
+    const topDealsByCompany = [];
+    const cashbackMap = new Map();
+    const giftcardMap = new Map();
+    cashbackDeals.forEach((deal) => cashbackMap.set(deal._id.toString(), deal.bestCashbackDeal));
+    giftcardDeals.forEach((deal) => giftcardMap.set(deal._id.toString(), deal.bestGiftcardDeal));
+    const companyIds = [...new Set([...cashbackMap.keys(), ...giftcardMap.keys()])];
+    const companies = yield company_model_1.Company.find({ _id: { $in: companyIds } });
+    for (const company of companies) {
+        const companyId = company._id.toString();
+        const bestCashbackDeal = cashbackMap.get(companyId);
+        const bestGiftcardDeal = giftcardMap.get(companyId);
+        // Filter credit card deals for this company
+        const relevantCreditCardDeals = creditCardDeals.filter((deal) => deal.companyId.toString() === companyId);
+        // Determine the top rate for sorting
+        const bestRate = Math.max((bestCashbackDeal === null || bestCashbackDeal === void 0 ? void 0 : bestCashbackDeal.percentage) || 0, (bestGiftcardDeal === null || bestGiftcardDeal === void 0 ? void 0 : bestGiftcardDeal.percentage) || 0);
+        topDealsByCompany.push({
+            company: {
+                id: companyId,
+                name: company.name,
+            },
+            bestRate, // Use this for sorting
+            bestCashbackDeal: bestCashbackDeal
+                ? {
+                    vendor: yield vendor_model_1.Vendor.findById(bestCashbackDeal.vendorId),
+                    percentage: bestCashbackDeal.percentage,
+                    link: bestCashbackDeal.link,
+                }
+                : null,
+            bestGiftcardDeal: bestGiftcardDeal
+                ? {
+                    vendor: yield vendor_model_1.Vendor.findById(bestGiftcardDeal.vendorId),
+                    percentage: bestGiftcardDeal.percentage,
+                    link: bestGiftcardDeal.link,
+                }
+                : null,
+            creditCardDeals: relevantCreditCardDeals.map((deal) => ({
+                type: deal.type,
+                percentage: deal.percentage,
+                link: deal.link,
+            })),
+        });
+    }
+    // Step 5: Sort companies by the best rate in descending order
+    return topDealsByCompany.sort((a, b) => b.bestRate - a.bestRate);
 });
 // Helper: Get Vendor ID by Name
 const getVendorIdByName = (name) => __awaiter(void 0, void 0, void 0, function* () {
