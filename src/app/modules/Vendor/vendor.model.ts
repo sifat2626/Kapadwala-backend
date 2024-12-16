@@ -11,11 +11,9 @@ const vendorSchema = new Schema<TVendor, VendorModel>(
     },
     logo: {
       type: String,
-      required: [true, 'Vendor logo URL is required'],
     },
     website: {
       type: String,
-      required: [true, 'Vendor website URL is required'],
     },
   },
   {

@@ -17,37 +17,38 @@ const http_status_1 = __importDefault(require("http-status"));
 const catchAsync_1 = __importDefault(require("../../utils/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../utils/sendResponse"));
 const deal_service_1 = require("./deal.service");
-// Upload deals from a CSV file
+// Upload and process deals from a CSV file
 const uploadDealsFromCSV = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.file) {
         throw new Error('No file uploaded');
     }
     // Process the uploaded file
-    const result = yield deal_service_1.DealServices.processCSV(req.file.path);
+    const result = yield deal_service_1.DealServices.processCSVData(req.file.buffer); // Assuming processCSVData accepts a Buffer
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
-        message: 'Deals uploaded and processed successfully.',
+        message: 'CSV processed successfully.',
         data: result,
     });
 }));
-// Other controllers (getAllDeals, getTopDeals, etc.)
+// Get all deals
 const getAllDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield deal_service_1.DealServices.getAllDeals(req.query);
+    const deals = yield deal_service_1.DealServices.getAllDeals(req.query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Deals retrieved successfully.',
-        data: result,
+        data: deals,
     });
 }));
+// Get top deals
 const getTopDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield deal_service_1.DealServices.getTopDeals();
+    const topDeals = yield deal_service_1.DealServices.getTopDeals();
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Top deals retrieved successfully.',
-        data: result,
+        data: topDeals,
     });
 }));
 exports.DealControllers = {

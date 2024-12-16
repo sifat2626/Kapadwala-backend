@@ -11,15 +11,12 @@ const companySchema = new mongoose_1.Schema({
     },
     description: {
         type: String,
-        required: [true, 'Company description is required'],
     },
     logo: {
         type: String,
-        required: [true, 'Company logo URL is required'],
     },
     website: {
         type: String,
-        required: [true, 'Company website URL is required'],
     },
 }, {
     timestamps: true, // Adds createdAt and updatedAt fields

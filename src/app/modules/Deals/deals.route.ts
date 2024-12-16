@@ -1,13 +1,10 @@
 import express from 'express';
-import multer from 'multer';
 import auth from '../../middlewares/auth';
-import { USER_ROLE } from '../User/user.constant'
-import { DealControllers } from './deal.controller'
+import { USER_ROLE } from '../User/user.constant';
+import { DealControllers } from './deal.controller';
+import { upload } from '../../utils/upload'
 
 const router = express.Router();
-
-// Configure multer for file uploads
-const upload = multer({ dest: 'uploads/' }); // Files will be stored in 'uploads/' temporarily
 
 // Route for uploading a CSV to create/update deals
 router.post(
@@ -27,7 +24,7 @@ router.get(
 // Get top deals
 router.get(
   '/top',
-  auth(USER_ROLE.user), // Authenticated users can access top deals
+  auth(USER_ROLE.user,USER_ROLE.admin), // Authenticated users can access top deals
   DealControllers.getTopDeals,
 );
 

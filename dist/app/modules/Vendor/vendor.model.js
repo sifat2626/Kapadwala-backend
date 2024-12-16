@@ -11,11 +11,9 @@ const vendorSchema = new mongoose_1.Schema({
     },
     logo: {
         type: String,
-        required: [true, 'Vendor logo URL is required'],
     },
     website: {
         type: String,
-        required: [true, 'Vendor website URL is required'],
     },
 }, {
     timestamps: true, // Adds createdAt and updatedAt fields

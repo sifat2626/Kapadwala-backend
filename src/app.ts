@@ -1,5 +1,6 @@
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import morgan from 'morgan'
 import express, { Application, Request, Response } from 'express'
 import globalErrorHandler from './app/middlewares/globalErrorhandler'
 import notFound from './app/middlewares/notFound'
@@ -20,6 +21,8 @@ app.use(
     allowedHeaders: 'Content-Type,Authorization',
   }),
 )
+
+app.use(morgan('dev'))
 
 // application routes
 app.use('/api/v1', router)
