@@ -18,6 +18,8 @@ router.get('/', VendorController.getAllVendors);
 
 router.get('/:id', VendorController.getVendorById);
 
+router.get('/deals/:vendorName', VendorController.getDealsByVendorName);
+
 router.patch(
   '/:id',
   auth(USER_ROLE.admin),

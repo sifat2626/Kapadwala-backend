@@ -25,6 +25,19 @@ const getVendorById = async (id: string) => {
   return vendor;
 };
 
+const getDealsByVendorName = async (vendorName: string) => {
+  // Find the vendor by name
+  const vendor = await Vendor.findOne({ name: vendorName });
+  if (!vendor) throw new Error('Vendor not found');
+
+  // Fetch all deals related to this vendor
+  const deals = await Deal.find({ vendorId: vendor._id })
+    .populate('vendorId', 'name logo website') // Populate vendor details
+    .populate('companyId', 'name'); // Populate company name for reference
+
+  return deals;
+};
+
 const updateVendor = async (id: string, data: Partial<TVendor>) => {
   const vendor = await Vendor.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   if (!vendor) throw new Error('Vendor not found');
@@ -44,6 +57,7 @@ export const VendorService = {
   createVendor,
   getAllVendors,
   getVendorById,
+  getDealsByVendorName,
   updateVendor,
   deleteVendor,
 };

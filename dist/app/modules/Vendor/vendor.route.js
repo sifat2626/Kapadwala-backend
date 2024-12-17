@@ -14,6 +14,7 @@ const router = (0, express_1.Router)();
 router.post('/', (0, validateRequest_1.default)(vendor_validation_1.VendorValidation.createVendor), (0, auth_1.default)(user_constant_1.USER_ROLE.admin), vendor_controller_1.VendorController.createVendor);
 router.get('/', vendor_controller_1.VendorController.getAllVendors);
 router.get('/:id', vendor_controller_1.VendorController.getVendorById);
+router.get('/deals/:vendorName', vendor_controller_1.VendorController.getDealsByVendorName);
 router.patch('/:id', (0, auth_1.default)(user_constant_1.USER_ROLE.admin), (0, validateRequest_1.default)(vendor_validation_1.VendorValidation.updateVendor), vendor_controller_1.VendorController.updateVendor);
 router.delete('/:id', (0, auth_1.default)(user_constant_1.USER_ROLE.admin), vendor_controller_1.VendorController.deleteVendor);
 exports.VendorRoutes = router;

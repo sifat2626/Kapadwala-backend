@@ -37,6 +37,19 @@ const getVendorById: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const getDealsByVendorName: RequestHandler = catchAsync(async (req, res) => {
+  const { vendorName } = req.params;
+
+  const deals = await VendorService.getDealsByVendorName(vendorName);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `Deals for vendor '${vendorName}' retrieved successfully.`,
+    data: deals,
+  });
+});
+
 const updateVendor: RequestHandler = catchAsync(async (req, res) => {
   const vendor = await VendorService.updateVendor(req.params.id, req.body);
 
@@ -63,6 +76,7 @@ export const VendorController = {
   createVendor,
   getAllVendors,
   getVendorById,
+  getDealsByVendorName,
   updateVendor,
   deleteVendor,
 };

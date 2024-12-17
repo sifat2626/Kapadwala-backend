@@ -44,6 +44,16 @@ const getCompanyById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
         data: company,
     });
 }));
+const getDealsByCompanyName = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { companyName } = req.params;
+    const deals = yield company_service_1.CompanyService.getDealsByCompanyName(companyName);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: `Deals for company '${companyName}' retrieved successfully.`,
+        data: deals,
+    });
+}));
 const updateCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const company = yield company_service_1.CompanyService.updateCompany(req.params.id, req.body);
     (0, sendResponse_1.default)(res, {
@@ -66,6 +76,7 @@ exports.CompanyController = {
     createCompany,
     getAllCompanies,
     getCompanyById,
+    getDealsByCompanyName,
     updateCompany,
     deleteCompany,
 };

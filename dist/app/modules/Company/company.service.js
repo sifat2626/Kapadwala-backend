@@ -31,6 +31,17 @@ const getCompanyById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error('Company not found');
     return company;
 });
+const getDealsByCompanyName = (companyName) => __awaiter(void 0, void 0, void 0, function* () {
+    // Find the company by name
+    const company = yield company_model_1.Company.findOne({ name: companyName });
+    if (!company)
+        throw new Error('Company not found');
+    // Fetch all deals related to this company
+    const deals = yield deals_model_1.Deal.find({ companyId: company._id })
+        .populate('vendorId', 'name logo website') // Populate vendor details
+        .populate('companyId', 'name'); // Populate company name for reference
+    return deals;
+});
 const updateCompany = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     const company = yield company_model_1.Company.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     if (!company)
@@ -49,6 +60,7 @@ exports.CompanyService = {
     createCompany,
     getAllCompanies,
     getCompanyById,
+    getDealsByCompanyName,
     updateCompany,
     deleteCompany,
 };

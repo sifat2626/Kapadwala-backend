@@ -25,6 +25,19 @@ const getCompanyById = async (id: string) => {
   return company;
 };
 
+const getDealsByCompanyName = async (companyName: string) => {
+  // Find the company by name
+  const company = await Company.findOne({ name: companyName });
+  if (!company) throw new Error('Company not found');
+
+  // Fetch all deals related to this company
+  const deals = await Deal.find({ companyId: company._id })
+    .populate('vendorId', 'name logo website') // Populate vendor details
+    .populate('companyId', 'name'); // Populate company name for reference
+
+  return deals;
+};
+
 const updateCompany = async (id: string, data: Partial<TCompany>) => {
   const company = await Company.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   if (!company) throw new Error('Company not found');
@@ -44,6 +57,7 @@ export const CompanyService = {
   createCompany,
   getAllCompanies,
   getCompanyById,
+  getDealsByCompanyName,
   updateCompany,
   deleteCompany,
 };

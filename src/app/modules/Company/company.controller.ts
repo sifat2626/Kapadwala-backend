@@ -37,6 +37,19 @@ const getCompanyById: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const getDealsByCompanyName: RequestHandler = catchAsync(async (req, res) => {
+  const { companyName } = req.params;
+
+  const deals = await CompanyService.getDealsByCompanyName(companyName);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `Deals for company '${companyName}' retrieved successfully.`,
+    data: deals,
+  });
+});
+
 const updateCompany: RequestHandler = catchAsync(async (req, res) => {
   const company = await CompanyService.updateCompany(req.params.id, req.body);
 
@@ -63,6 +76,7 @@ export const CompanyController = {
   createCompany,
   getAllCompanies,
   getCompanyById,
+  getDealsByCompanyName,
   updateCompany,
   deleteCompany,
 };

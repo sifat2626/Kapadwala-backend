@@ -31,6 +31,17 @@ const getVendorById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error('Vendor not found');
     return vendor;
 });
+const getDealsByVendorName = (vendorName) => __awaiter(void 0, void 0, void 0, function* () {
+    // Find the vendor by name
+    const vendor = yield vendor_model_1.Vendor.findOne({ name: vendorName });
+    if (!vendor)
+        throw new Error('Vendor not found');
+    // Fetch all deals related to this vendor
+    const deals = yield deals_model_1.Deal.find({ vendorId: vendor._id })
+        .populate('vendorId', 'name logo website') // Populate vendor details
+        .populate('companyId', 'name'); // Populate company name for reference
+    return deals;
+});
 const updateVendor = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     const vendor = yield vendor_model_1.Vendor.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     if (!vendor)
@@ -49,6 +60,7 @@ exports.VendorService = {
     createVendor,
     getAllVendors,
     getVendorById,
+    getDealsByVendorName,
     updateVendor,
     deleteVendor,
 };

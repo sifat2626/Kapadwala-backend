@@ -44,6 +44,16 @@ const getVendorById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
         data: vendor,
     });
 }));
+const getDealsByVendorName = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { vendorName } = req.params;
+    const deals = yield vendor_service_1.VendorService.getDealsByVendorName(vendorName);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: `Deals for vendor '${vendorName}' retrieved successfully.`,
+        data: deals,
+    });
+}));
 const updateVendor = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const vendor = yield vendor_service_1.VendorService.updateVendor(req.params.id, req.body);
     (0, sendResponse_1.default)(res, {
@@ -66,6 +76,7 @@ exports.VendorController = {
     createVendor,
     getAllVendors,
     getVendorById,
+    getDealsByVendorName,
     updateVendor,
     deleteVendor,
 };
