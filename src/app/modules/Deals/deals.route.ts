@@ -3,42 +3,43 @@ import auth from '../../middlewares/auth';
 import { USER_ROLE } from '../User/user.constant';
 import { DealControllers } from './deal.controller';
 import { upload } from '../../utils/upload'
+import protect from '../../middlewares/protect'
 
 const router = express.Router();
 
 // Route for uploading a CSV to create/update deals
 router.post(
   '/upload-csv',
-  auth(USER_ROLE.admin), // Only admins can upload CSV files
+  auth(USER_ROLE.admin,USER_ROLE.superAdmin), // Only admins can upload CSV files
   upload.single('file'), // Accepts a single file with the key 'file'
   DealControllers.uploadDealsFromCSV,
 );
 
-router.get('/active', DealControllers.getAllActiveDeals);
+router.get('/active',protect(), DealControllers.getAllActiveDeals);
 
-router.get('/cashback-rate/:companyName', DealControllers.getBestCashbackRateByCompany);
+router.get('/cashback-rate/:companyName',protect(), DealControllers.getBestCashbackRateByCompany);
 
-router.get('/giftcard-rate/:companyName', DealControllers.getBestGiftcardRateByCompany);
+router.get('/giftcard-rate/:companyName',protect(), DealControllers.getBestGiftcardRateByCompany);
 
-router.get('/creditcard/expiring-soon/:vendorName', DealControllers.getExpiringCreditcardDealsByVendor);
+router.get('/creditcard/expiring-soon/:vendorName',protect(), DealControllers.getExpiringCreditcardDealsByVendor);
 
-router.get('/giftcard/active', DealControllers.getActiveGiftcardDeals);
+router.get('/giftcard/active',protect(), DealControllers.getActiveGiftcardDeals);
 
-router.get('/cashback/active', DealControllers.getActiveCashbackDeals);
+router.get('/cashback/active',protect(), DealControllers.getActiveCashbackDeals);
 
-router.get('/creditcard/active', DealControllers.getActiveCreditcardDeals);
+router.get('/creditcard/active',protect(), DealControllers.getActiveCreditcardDeals);
 
 // Get all deals
 router.get(
   '/',
-  auth(USER_ROLE.user,USER_ROLE.admin), // Authenticated users can access deals
+  protect(),
   DealControllers.getAllDeals,
 );
 
 // Get top deals
 router.get(
   '/top',
-  auth(USER_ROLE.user,USER_ROLE.admin), // Authenticated users can access top deals
+  protect(),
   DealControllers.getTopDeals,
 );
 
