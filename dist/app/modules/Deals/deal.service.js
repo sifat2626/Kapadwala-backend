@@ -194,9 +194,117 @@ const getCompanyIdByName = (name) => __awaiter(void 0, void 0, void 0, function*
     const company = yield company_model_1.Company.findOne({ name });
     return company ? company._id : null;
 });
+const getBestCashbackRateByCompany = (companyName) => __awaiter(void 0, void 0, void 0, function* () {
+    // Fetch all cashback deals for the given company (active and expired)
+    const deals = yield deals_model_1.Deal.aggregate([
+        {
+            $match: {
+                type: 'cashback',
+            }
+        },
+        {
+            $lookup: {
+                from: 'companies',
+                localField: 'companyId',
+                foreignField: '_id',
+                as: 'company',
+            },
+        },
+        { $unwind: '$company' }, // Flatten company array
+        { $match: { 'company.name': companyName } }, // Filter by company name
+        {
+            $group: {
+                _id: { date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } } },
+                bestCashbackRate: { $max: '$percentage' }, // Get the max cashback rate for each date
+            },
+        },
+        { $sort: { '_id.date': 1 } }, // Sort by date ascending
+    ]);
+    // Format the results
+    return deals.map((deal) => ({
+        date: deal._id.date,
+        cashbackRate: deal.bestCashbackRate,
+    }));
+});
+const getBestGiftcardRateByCompany = (companyName) => __awaiter(void 0, void 0, void 0, function* () {
+    // Fetch all gift card deals for the given company
+    const deals = yield deals_model_1.Deal.aggregate([
+        {
+            $match: {
+                type: 'giftcard', // Filter only gift card deals
+            },
+        },
+        {
+            $lookup: {
+                from: 'companies',
+                localField: 'companyId',
+                foreignField: '_id',
+                as: 'company',
+            },
+        },
+        { $unwind: '$company' }, // Flatten the company array
+        { $match: { 'company.name': companyName } }, // Filter by company name
+        {
+            $group: {
+                _id: { date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } } },
+                bestGiftcardRate: { $max: '$percentage' }, // Get the max gift card rate for each date
+            },
+        },
+        { $sort: { '_id.date': 1 } }, // Sort by date in ascending order
+    ]);
+    // Format the result
+    return deals.map((deal) => ({
+        date: deal._id.date,
+        giftcardRate: deal.bestGiftcardRate,
+    }));
+});
+const getActiveCashbackDeals = () => __awaiter(void 0, void 0, void 0, function* () {
+    const currentDate = new Date();
+    // Fetch all active cashback deals, sorted by percentage in descending order
+    const deals = yield deals_model_1.Deal.find({
+        type: 'cashback', // Only cashback deals
+        isActive: true, // Only active deals
+        expiryDate: { $gte: currentDate }, // Deals that haven't expired
+    })
+        .sort({ percentage: -1 }) // Sort from best to worst
+        .populate('vendorId', 'name logo website') // Populate vendor details
+        .populate('companyId', 'name'); // Populate company details
+    return deals;
+});
+const getActiveGiftcardDeals = () => __awaiter(void 0, void 0, void 0, function* () {
+    const currentDate = new Date();
+    // Fetch all active gift card deals, sorted by percentage in descending order
+    const deals = yield deals_model_1.Deal.find({
+        type: 'giftcard', // Only gift card deals
+        isActive: true, // Only active deals
+        expiryDate: { $gte: currentDate }, // Deals that haven't expired
+    })
+        .sort({ percentage: -1 }) // Sort from best to worst
+        .populate('vendorId', 'name logo website') // Populate vendor details
+        .populate('companyId', 'name'); // Populate company details
+    return deals;
+});
+const getActiveCreditcardDeals = () => __awaiter(void 0, void 0, void 0, function* () {
+    const currentDate = new Date();
+    // Fetch all active credit card deals sorted by percentage in descending order
+    const deals = yield deals_model_1.Deal.find({
+        type: 'creditcard', // Only credit card deals
+        isActive: true, // Only active deals
+        expiryDate: { $gte: currentDate }, // Deals that haven't expired
+    })
+        .sort({ percentage: -1 }) // Sort by percentage (best to worst)
+        .populate('vendorId', 'name logo website') // Populate vendor details
+        .populate('companyId', 'name'); // Populate company details
+    return deals;
+});
 exports.DealServices = {
     getAllDeals,
     getAllActiveDeals,
+    getBestCashbackRateByCompany,
+    getBestGiftcardRateByCompany,
+    getActiveCashbackDeals,
+    getActiveGiftcardDeals,
+    getActiveCreditcardDeals,
     getTopDeals,
     processCSVData,
 };

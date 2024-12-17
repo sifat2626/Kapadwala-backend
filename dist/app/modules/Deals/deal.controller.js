@@ -60,9 +60,61 @@ const getTopDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
         data: topDeals,
     });
 }));
+const getBestCashbackRateByCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { companyName } = req.params;
+    const data = yield deal_service_1.DealServices.getBestCashbackRateByCompany(companyName);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: `Best cashback rate for '${companyName}' retrieved successfully.`,
+        data,
+    });
+}));
+const getBestGiftcardRateByCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { companyName } = req.params;
+    const data = yield deal_service_1.DealServices.getBestGiftcardRateByCompany(companyName);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: `Best gift card rate for '${companyName}' retrieved successfully.`,
+        data,
+    });
+}));
+const getActiveCashbackDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const deals = yield deal_service_1.DealServices.getActiveCashbackDeals();
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Active cashback deals retrieved successfully.',
+        data: deals,
+    });
+}));
+const getActiveGiftcardDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const deals = yield deal_service_1.DealServices.getActiveGiftcardDeals();
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Active gift card deals retrieved successfully.',
+        data: deals,
+    });
+}));
+const getActiveCreditcardDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const deals = yield deal_service_1.DealServices.getActiveCreditcardDeals();
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Active credit card deals retrieved successfully.',
+        data: deals,
+    });
+}));
 exports.DealControllers = {
     uploadDealsFromCSV,
     getAllActiveDeals,
     getAllDeals,
     getTopDeals,
+    getBestCashbackRateByCompany,
+    getBestGiftcardRateByCompany,
+    getActiveGiftcardDeals,
+    getActiveCashbackDeals,
+    getActiveCreditcardDeals,
 };

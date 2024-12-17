@@ -57,9 +57,73 @@ const getTopDeals: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const getBestCashbackRateByCompany: RequestHandler = catchAsync(async (req, res) => {
+  const { companyName } = req.params;
+
+  const data = await DealServices.getBestCashbackRateByCompany(companyName);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `Best cashback rate for '${companyName}' retrieved successfully.`,
+    data,
+  });
+});
+
+const getBestGiftcardRateByCompany: RequestHandler = catchAsync(async (req, res) => {
+  const { companyName } = req.params;
+
+  const data = await DealServices.getBestGiftcardRateByCompany(companyName);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `Best gift card rate for '${companyName}' retrieved successfully.`,
+    data,
+  });
+});
+
+const getActiveCashbackDeals: RequestHandler = catchAsync(async (req, res) => {
+  const deals = await DealServices.getActiveCashbackDeals();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Active cashback deals retrieved successfully.',
+    data: deals,
+  });
+});
+
+const getActiveGiftcardDeals: RequestHandler = catchAsync(async (req, res) => {
+  const deals = await DealServices.getActiveGiftcardDeals();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Active gift card deals retrieved successfully.',
+    data: deals,
+  });
+});
+
+const getActiveCreditcardDeals: RequestHandler = catchAsync(async (req, res) => {
+  const deals = await DealServices.getActiveCreditcardDeals();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Active credit card deals retrieved successfully.',
+    data: deals,
+  });
+});
+
 export const DealControllers = {
   uploadDealsFromCSV,
   getAllActiveDeals,
   getAllDeals,
   getTopDeals,
+  getBestCashbackRateByCompany,
+  getBestGiftcardRateByCompany,
+  getActiveGiftcardDeals,
+  getActiveCashbackDeals,
+  getActiveCreditcardDeals,
 };

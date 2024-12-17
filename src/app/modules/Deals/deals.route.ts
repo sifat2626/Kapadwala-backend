@@ -16,6 +16,16 @@ router.post(
 
 router.get('/active', DealControllers.getAllActiveDeals);
 
+router.get('/cashback-rate/:companyName', DealControllers.getBestCashbackRateByCompany);
+
+router.get('/giftcard-rate/:companyName', DealControllers.getBestGiftcardRateByCompany);
+
+router.get('/giftcard/active', DealControllers.getActiveGiftcardDeals);
+
+router.get('/cashback/active', DealControllers.getActiveCashbackDeals);
+
+router.get('/creditcard/active', DealControllers.getActiveCreditcardDeals);
+
 // Get all deals
 router.get(
   '/',
