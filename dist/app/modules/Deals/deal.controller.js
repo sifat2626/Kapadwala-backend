@@ -41,6 +41,15 @@ const getAllDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
         data: deals,
     });
 }));
+const getAllActiveDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const activeDeals = yield deal_service_1.DealServices.getAllActiveDeals();
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'All active deals retrieved successfully.',
+        data: activeDeals,
+    });
+}));
 // Get top deals
 const getTopDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const topDeals = yield deal_service_1.DealServices.getTopDeals();
@@ -53,6 +62,7 @@ const getTopDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
 }));
 exports.DealControllers = {
     uploadDealsFromCSV,
+    getAllActiveDeals,
     getAllDeals,
     getTopDeals,
 };

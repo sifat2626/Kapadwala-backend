@@ -14,6 +14,7 @@ const router = express_1.default.Router();
 router.post('/upload-csv', (0, auth_1.default)(user_constant_1.USER_ROLE.admin), // Only admins can upload CSV files
 upload_1.upload.single('file'), // Accepts a single file with the key 'file'
 deal_controller_1.DealControllers.uploadDealsFromCSV);
+router.get('/active', deal_controller_1.DealControllers.getAllActiveDeals);
 // Get all deals
 router.get('/', (0, auth_1.default)(user_constant_1.USER_ROLE.user, user_constant_1.USER_ROLE.admin), // Authenticated users can access deals
 deal_controller_1.DealControllers.getAllDeals);

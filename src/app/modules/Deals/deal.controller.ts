@@ -34,6 +34,17 @@ const getAllDeals: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const getAllActiveDeals: RequestHandler = catchAsync(async (req, res) => {
+  const activeDeals = await DealServices.getAllActiveDeals();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'All active deals retrieved successfully.',
+    data: activeDeals,
+  });
+});
+
 // Get top deals
 const getTopDeals: RequestHandler = catchAsync(async (req, res) => {
   const topDeals = await DealServices.getTopDeals();
@@ -48,6 +59,7 @@ const getTopDeals: RequestHandler = catchAsync(async (req, res) => {
 
 export const DealControllers = {
   uploadDealsFromCSV,
+  getAllActiveDeals,
   getAllDeals,
   getTopDeals,
 };

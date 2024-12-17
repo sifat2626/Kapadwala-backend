@@ -30,8 +30,13 @@ const getDealsByCompanyName = async (companyName: string) => {
   const company = await Company.findOne({ name: companyName });
   if (!company) throw new Error('Company not found');
 
-  // Fetch all deals related to this company
-  const deals = await Deal.find({ companyId: company._id })
+  const currentDate = new Date();
+
+  // Fetch all non-expired deals related to this company
+  const deals = await Deal.find({
+    companyId: company._id,
+    expiryDate: { $gte: currentDate }, // Filter only active (non-expired) deals
+  })
     .populate('vendorId', 'name logo website') // Populate vendor details
     .populate('companyId', 'name'); // Populate company name for reference
 

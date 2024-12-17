@@ -119,38 +119,61 @@ const getAllDeals = (query) => __awaiter(void 0, void 0, void 0, function* () {
         data: deals,
     };
 });
+const getAllActiveDeals = () => __awaiter(void 0, void 0, void 0, function* () {
+    const currentDate = new Date();
+    // Fetch all non-expired deals
+    const activeDeals = yield deals_model_1.Deal.find({
+        expiryDate: { $gte: currentDate }, // Only non-expired deals
+    })
+        .populate('vendorId', 'name logo website') // Populate vendor details
+        .populate('companyId', 'name'); // Populate company details
+    return activeDeals;
+});
 // Fetch Top Deals
 const getTopDeals = () => __awaiter(void 0, void 0, void 0, function* () {
+    const currentDate = new Date();
+    // Fetch the best non-expired cashback deals
     const cashbackDeals = yield deals_model_1.Deal.aggregate([
-        { $match: { type: 'cashback', isActive: true } },
+        { $match: { type: 'cashback', isActive: true, expiryDate: { $gte: currentDate } } },
         { $sort: { percentage: -1 } },
         { $group: { _id: '$companyId', bestCashbackDeal: { $first: '$$ROOT' } } },
     ]);
+    // Fetch the best non-expired gift card deals
     const giftcardDeals = yield deals_model_1.Deal.aggregate([
-        { $match: { type: 'giftcard', isActive: true } },
+        { $match: { type: 'giftcard', isActive: true, expiryDate: { $gte: currentDate } } },
         { $sort: { percentage: -1 } },
         { $group: { _id: '$companyId', bestGiftcardDeal: { $first: '$$ROOT' } } },
     ]);
-    const creditCardDeals = yield deals_model_1.Deal.find({ type: 'creditcard', isActive: true })
+    // Fetch the best non-expired credit card deals
+    const creditCardDeals = yield deals_model_1.Deal.find({
+        type: 'creditcard',
+        isActive: true,
+        expiryDate: { $gte: currentDate }, // Only fetch non-expired deals
+    })
         .sort({ percentage: -1 })
-        .populate('vendorId', 'name logo website'); // Fetch vendor details
+        .populate('vendorId', 'name logo website'); // Populate vendor details
+    // Maps for efficient grouping
     const cashbackMap = new Map();
     const giftcardMap = new Map();
     const creditCardMap = new Map();
+    // Fill cashback and gift card maps
     cashbackDeals.forEach((deal) => cashbackMap.set(deal._id.toString(), deal.bestCashbackDeal));
     giftcardDeals.forEach((deal) => giftcardMap.set(deal._id.toString(), deal.bestGiftcardDeal));
+    // Group credit card deals by companyId
     creditCardDeals.forEach((deal) => {
         const companyId = deal.companyId.toString();
         if (!creditCardMap.has(companyId))
             creditCardMap.set(companyId, []);
         creditCardMap.get(companyId).push({
-            vendor: deal.vendorId, // Includes vendor name, logo, and website
+            vendor: deal.vendorId, // Populated vendor details
             percentage: deal.percentage,
             link: deal.link,
         });
     });
+    // Fetch all company details for unique companyIds
     const companyIds = [...new Set([...cashbackMap.keys(), ...giftcardMap.keys(), ...creditCardMap.keys()])];
     const companies = yield company_model_1.Company.find({ _id: { $in: companyIds } });
+    // Combine results
     return companies.map((company) => {
         const companyId = company._id.toString();
         return {
@@ -173,6 +196,7 @@ const getCompanyIdByName = (name) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.DealServices = {
     getAllDeals,
+    getAllActiveDeals,
     getTopDeals,
     processCSVData,
 };

@@ -14,6 +14,8 @@ router.post(
   DealControllers.uploadDealsFromCSV,
 );
 
+router.get('/active', DealControllers.getAllActiveDeals);
+
 // Get all deals
 router.get(
   '/',
