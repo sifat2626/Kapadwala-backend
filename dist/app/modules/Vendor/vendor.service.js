@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VendorService = void 0;
 const vendor_model_1 = require("./vendor.model");
+const deals_model_1 = require("../Deals/deals.model");
 const createVendor = (data) => __awaiter(void 0, void 0, void 0, function* () {
     const vendor = yield vendor_model_1.Vendor.create(data);
     return vendor;
@@ -37,9 +38,12 @@ const updateVendor = (id, data) => __awaiter(void 0, void 0, void 0, function* (
     return vendor;
 });
 const deleteVendor = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    // Find and delete the vendor
     const vendor = yield vendor_model_1.Vendor.findByIdAndDelete(id);
     if (!vendor)
         throw new Error('Vendor not found');
+    // Delete all related deals where vendorId matches
+    yield deals_model_1.Deal.deleteMany({ vendorId: id });
 });
 exports.VendorService = {
     createVendor,

@@ -1,5 +1,6 @@
 import { Vendor } from './vendor.model';
 import { TVendor } from './vendor.type';
+import { Deal } from '../Deals/deals.model'
 
 const createVendor = async (data: TVendor) => {
   const vendor = await Vendor.create(data);
@@ -31,8 +32,12 @@ const updateVendor = async (id: string, data: Partial<TVendor>) => {
 };
 
 const deleteVendor = async (id: string) => {
+  // Find and delete the vendor
   const vendor = await Vendor.findByIdAndDelete(id);
   if (!vendor) throw new Error('Vendor not found');
+
+  // Delete all related deals where vendorId matches
+  await Deal.deleteMany({ vendorId: id });
 };
 
 export const VendorService = {
