@@ -85,6 +85,71 @@ const subscribeUser: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const addFavoriteCompany: RequestHandler = catchAsync(async (req, res) => {
+  const  userId  = req.user._id;
+  const { companyId } = req.params;
+
+  console.log(userId,companyId);
+
+  const user = await UserServices.addFavoriteCompany(userId, companyId);
+
+  // Add a null check to ensure user is valid
+  if (!user) {
+    return sendResponse(res, {
+      statusCode: httpStatus.NOT_FOUND,
+      success: false,
+      message: 'User not found.',
+      data: null,
+    });
+  }
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Company added to favorites successfully.',
+    data: user.favorites,
+  });
+});
+
+
+const removeFavoriteCompany: RequestHandler = catchAsync(async (req, res) => {
+  const  userId  = req.user._id;
+  const { companyId } = req.params;
+
+  const user = await UserServices.removeFavoriteCompany(userId, companyId);
+
+  // Add a null check
+  if (!user) {
+    return sendResponse(res, {
+      statusCode: httpStatus.NOT_FOUND,
+      success: false,
+      message: 'User not found.',
+      data: null,
+    });
+  }
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Company removed from favorites successfully.',
+    data: user.favorites,
+  });
+});
+
+const getAllFavoriteCompanies: RequestHandler = catchAsync(async (req, res) => {
+  const userId  = req.user._id;
+
+  const user = await UserServices.getAllFavoriteCompanies(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Favorite companies retrieved successfully.',
+    data: user?.favorites,
+  });
+});
+
+
 export const UserControllers = {
   createUser,
   getAllUsers,
@@ -92,4 +157,7 @@ export const UserControllers = {
   updateUserRole,
   deleteUser,
   subscribeUser,
+  addFavoriteCompany,
+  removeFavoriteCompany,
+  getAllFavoriteCompanies
 };

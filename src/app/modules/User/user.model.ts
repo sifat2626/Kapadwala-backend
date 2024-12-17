@@ -1,10 +1,8 @@
-/* eslint-disable @typescript-eslint/no-this-alias */
+import { Schema, model, Types } from 'mongoose';
 import bcrypt from 'bcrypt';
-import { Schema, model } from 'mongoose';
 import config from '../../config';
 import { TUser, UserModel } from './user.interface';
 
-// Mongoose schema for User
 const userSchema = new Schema<TUser, UserModel>(
   {
     name: {
@@ -21,57 +19,56 @@ const userSchema = new Schema<TUser, UserModel>(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      select: false, // Exclude password by default
+      select: false,
     },
     role: {
       type: String,
       required: [true, 'Role is required'],
-      enum: {
-        values: ['superAdmin', 'admin', 'user'],
-        message: '{VALUE} is not a valid role',
-      },
+      enum: ['superAdmin', 'admin', 'user'],
       default: 'user',
     },
     isSubscribed: {
       type: Boolean,
-      default: false, // Default to non-subscribed
+      default: false,
     },
     subscriptionDate: {
       type: Date,
-      default: null, // Only populated if subscribed
+      default: null,
     },
+    favorites: [
+      {
+        type: Types.ObjectId,
+        ref: 'Company', // References the Company model
+      },
+    ],
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt fields automatically
+    timestamps: true,
   },
 );
 
-// Middleware to hash password before saving
+// Middleware to hash password
 userSchema.pre('save', async function (next) {
-  const user = this;
-
-  if (user.isModified('password')) {
-    user.password = await bcrypt.hash(
-      user.password,
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(
+      this.password,
       Number(config.bcrypt_salt_rounds),
     );
   }
-
   next();
 });
 
-// Middleware to clear the password field after saving
+// Remove password after save
 userSchema.post('save', function (doc, next) {
   doc.password = '';
   next();
 });
 
-// Static method to check if a user exists by email
+// Static methods
 userSchema.statics.isUserExistsByEmail = async function (email: string) {
   return await User.findOne({ email }).select('+password');
 };
 
-// Static method to check if a plain text password matches a hashed password
 userSchema.statics.isPasswordMatched = async function (
   plainTextPassword: string,
   hashedPassword: string,
@@ -79,5 +76,4 @@ userSchema.statics.isPasswordMatched = async function (
   return await bcrypt.compare(plainTextPassword, hashedPassword);
 };
 
-// Export the User model
 export const User = model<TUser, UserModel>('User', userSchema);

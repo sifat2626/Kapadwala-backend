@@ -43,6 +43,34 @@ const getDealsByCompanyName = async (companyName: string) => {
   return deals;
 };
 
+const getActiveDealsByCompany = async (companyName: string, type?: string) => {
+  // Find the company by name
+  const company = await Company.findOne({ name: companyName });
+  if (!company) throw new Error('Company not found');
+
+  const currentDate = new Date();
+
+  // Define the base query
+  const query: any = {
+    companyId: company._id,
+    isActive: true,
+    expiryDate: { $gte: currentDate }, // Active, non-expired deals
+  };
+
+  // Add type filter only if provided
+  if (type) {
+    query.type = type;
+  }
+
+  // Fetch all active deals for the given company, optionally filtered by type
+  const deals = await Deal.find(query)
+    .sort({ percentage: -1 }) // Sort deals by percentage, best to worst
+    .populate('vendorId', 'name logo website') // Populate vendor details
+    .populate('companyId', 'name'); // Populate company details
+
+  return deals;
+};
+
 const updateCompany = async (id: string, data: Partial<TCompany>) => {
   const company = await Company.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   if (!company) throw new Error('Company not found');
@@ -63,6 +91,7 @@ export const CompanyService = {
   getAllCompanies,
   getCompanyById,
   getDealsByCompanyName,
+  getActiveDealsByCompany,
   updateCompany,
   deleteCompany,
 };

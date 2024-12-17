@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserServices = void 0;
 const user_model_1 = require("./user.model");
+const company_model_1 = require("../Company/company.model");
 const createUserIntoDB = (userData) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.create(userData);
     return user;
@@ -50,6 +51,32 @@ const subscribeUser = (id) => __awaiter(void 0, void 0, void 0, function* () {
     yield user.save();
     return user;
 });
+const addFavoriteCompany = (userId, companyId) => __awaiter(void 0, void 0, void 0, function* () {
+    // Check if the company exists
+    const company = yield company_model_1.Company.findById(companyId);
+    if (!company)
+        throw new Error('Company not found');
+    // Add the company to the user's favorites if not already added
+    const user = yield user_model_1.User.findByIdAndUpdate(userId, { $addToSet: { favorites: companyId } }, // Prevent duplicates
+    { new: true }).populate('favorites', 'name'); // Populate favorite companies
+    return user;
+});
+const removeFavoriteCompany = (userId, companyId) => __awaiter(void 0, void 0, void 0, function* () {
+    // Remove the company from the user's favorites
+    const user = yield user_model_1.User.findByIdAndUpdate(userId, { $pull: { favorites: companyId } }, // Remove the company ID
+    { new: true }).populate('favorites', 'name');
+    return user;
+});
+const getAllFavoriteCompanies = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    // Fetch the user and populate their favorite companies
+    const user = yield user_model_1.User.findById(userId)
+        .populate('favorites', 'name description logo website') // Populate company details
+        .select('favorites'); // Return only the favorites field
+    if (!user) {
+        throw new Error('User not found');
+    }
+    return user;
+});
 exports.UserServices = {
     createUserIntoDB,
     getAllUsersFromDB,
@@ -57,4 +84,7 @@ exports.UserServices = {
     updateUserRoleIntoDB,
     deleteUserIntoDB,
     subscribeUser,
+    addFavoriteCompany,
+    removeFavoriteCompany,
+    getAllFavoriteCompanies
 };

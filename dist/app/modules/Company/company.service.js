@@ -46,6 +46,29 @@ const getDealsByCompanyName = (companyName) => __awaiter(void 0, void 0, void 0,
         .populate('companyId', 'name'); // Populate company name for reference
     return deals;
 });
+const getActiveDealsByCompany = (companyName, type) => __awaiter(void 0, void 0, void 0, function* () {
+    // Find the company by name
+    const company = yield company_model_1.Company.findOne({ name: companyName });
+    if (!company)
+        throw new Error('Company not found');
+    const currentDate = new Date();
+    // Define the base query
+    const query = {
+        companyId: company._id,
+        isActive: true,
+        expiryDate: { $gte: currentDate }, // Active, non-expired deals
+    };
+    // Add type filter only if provided
+    if (type) {
+        query.type = type;
+    }
+    // Fetch all active deals for the given company, optionally filtered by type
+    const deals = yield deals_model_1.Deal.find(query)
+        .sort({ percentage: -1 }) // Sort deals by percentage, best to worst
+        .populate('vendorId', 'name logo website') // Populate vendor details
+        .populate('companyId', 'name'); // Populate company details
+    return deals;
+});
 const updateCompany = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     const company = yield company_model_1.Company.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     if (!company)
@@ -65,6 +88,7 @@ exports.CompanyService = {
     getAllCompanies,
     getCompanyById,
     getDealsByCompanyName,
+    getActiveDealsByCompany,
     updateCompany,
     deleteCompany,
 };

@@ -37,4 +37,12 @@ router.patch(
   UserControllers.subscribeUser,
 );
 
+// Route to add a favorite company
+router.post('/:companyId/favorites',auth(USER_ROLE.user,USER_ROLE.admin,USER_ROLE.superAdmin), UserControllers.addFavoriteCompany);
+
+// Route to remove a favorite company
+router.delete('/:companyId/favorites',auth(USER_ROLE.user,USER_ROLE.admin,USER_ROLE.superAdmin), UserControllers.removeFavoriteCompany);
+
+router.get('/favorites', auth(USER_ROLE.user,USER_ROLE.admin,USER_ROLE.superAdmin), UserControllers.getAllFavoriteCompanies);
+
 export const UserRoutes = router;

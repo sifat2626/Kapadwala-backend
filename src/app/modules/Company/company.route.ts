@@ -17,6 +17,8 @@ router.get('/:id', CompanyController.getCompanyById);
 
 router.get('/deals/:companyName', CompanyController.getDealsByCompanyName);
 
+router.get('/active-deals/:companyName', CompanyController.getActiveDealsByCompany);
+
 router.patch(
   '/:id',
   validateRequest(CompanyValidation.updateCompany),

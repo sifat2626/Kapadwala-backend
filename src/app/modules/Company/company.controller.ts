@@ -50,6 +50,20 @@ const getDealsByCompanyName: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const getActiveDealsByCompany: RequestHandler = catchAsync(async (req, res) => {
+  const { companyName } = req.params;
+  const { type } = req.query; // Optional type filter
+
+  const deals = await CompanyService.getActiveDealsByCompany(companyName, type as string);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `Active deals for company '${companyName}'${type ? ` of type '${type}'` : ''} retrieved successfully.`,
+    data: deals,
+  });
+});
+
 const updateCompany: RequestHandler = catchAsync(async (req, res) => {
   const company = await CompanyService.updateCompany(req.params.id, req.body);
 
@@ -77,6 +91,7 @@ export const CompanyController = {
   getAllCompanies,
   getCompanyById,
   getDealsByCompanyName,
+  getActiveDealsByCompany,
   updateCompany,
   deleteCompany,
 };

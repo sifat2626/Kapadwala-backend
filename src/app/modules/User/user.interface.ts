@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { USER_ROLE } from './user.constant';
 
 // User type definition
@@ -11,6 +11,7 @@ export interface TUser {
   role: 'superAdmin' | 'admin' | 'user';
   isSubscribed: boolean;
   subscriptionDate: Date | null;
+  favorites: Types.ObjectId[]; // Array of references to Company IDs
 }
 
 // Mongoose Model extension for custom static methods

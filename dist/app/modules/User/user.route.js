@@ -21,4 +21,9 @@ router.patch('/change-role/:id', (0, auth_1.default)(user_constant_1.USER_ROLE.a
 router.delete('/delete-user/:id', (0, auth_1.default)(user_constant_1.USER_ROLE.admin), user_controller_1.UserControllers.deleteUser);
 // Route for subscribing a user
 router.patch('/subscribe/:id', (0, auth_1.default)(user_constant_1.USER_ROLE.admin), user_controller_1.UserControllers.subscribeUser);
+// Route to add a favorite company
+router.post('/:companyId/favorites', (0, auth_1.default)(user_constant_1.USER_ROLE.user, user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), user_controller_1.UserControllers.addFavoriteCompany);
+// Route to remove a favorite company
+router.delete('/:companyId/favorites', (0, auth_1.default)(user_constant_1.USER_ROLE.user, user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), user_controller_1.UserControllers.removeFavoriteCompany);
+router.get('/favorites', (0, auth_1.default)(user_constant_1.USER_ROLE.user, user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), user_controller_1.UserControllers.getAllFavoriteCompanies);
 exports.UserRoutes = router;

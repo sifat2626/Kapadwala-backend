@@ -341,6 +341,27 @@ const getActiveCreditcardDeals = async () => {
   return deals;
 };
 
+const getExpiringCreditcardDealsByVendor = async (vendorName: string) => {
+  const currentDate = new Date();
+
+  // Find the vendor by name
+  const vendor = await Vendor.findOne({ name: vendorName });
+  if (!vendor) throw new Error('Vendor not found');
+
+  // Fetch credit card deals for the vendor that are expiring soon
+  const deals = await Deal.find({
+    type: 'creditcard', // Only credit card deals
+    isActive: true, // Only active deals
+    expiryDate: { $gte: currentDate }, // Deals that haven't expired yet
+    vendorId: vendor._id, // Filter by vendor ID
+  })
+    .sort({ expiryDate: 1 }) // Sort by expiry date (soonest first)
+    .populate('vendorId', 'name logo website') // Populate vendor details
+    .populate('companyId', 'name'); // Populate company details
+
+  return deals;
+};
+
 export const DealServices = {
   getAllDeals,
   getAllActiveDeals,
@@ -349,6 +370,7 @@ export const DealServices = {
   getActiveCashbackDeals,
   getActiveGiftcardDeals,
   getActiveCreditcardDeals,
+  getExpiringCreditcardDealsByVendor,
   getTopDeals,
   processCSVData,
 };

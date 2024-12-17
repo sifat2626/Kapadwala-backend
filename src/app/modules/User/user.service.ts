@@ -1,5 +1,6 @@
 import { TUser } from './user.interface';
 import { User } from './user.model';
+import { Company } from '../Company/company.model'
 
 const createUserIntoDB = async (userData: Partial<TUser>): Promise<TUser> => {
   const user = await User.create(userData);
@@ -49,6 +50,45 @@ const subscribeUser = async (id: string): Promise<TUser | null> => {
   return user;
 };
 
+const addFavoriteCompany = async (userId: string, companyId: string) => {
+  // Check if the company exists
+  const company = await Company.findById(companyId);
+  if (!company) throw new Error('Company not found');
+
+  // Add the company to the user's favorites if not already added
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $addToSet: { favorites: companyId } }, // Prevent duplicates
+    { new: true },
+  ).populate('favorites', 'name'); // Populate favorite companies
+
+  return user;
+};
+
+const removeFavoriteCompany = async (userId: string, companyId: string) => {
+  // Remove the company from the user's favorites
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $pull: { favorites: companyId } }, // Remove the company ID
+    { new: true },
+  ).populate('favorites', 'name');
+
+  return user;
+};
+
+const getAllFavoriteCompanies = async (userId: string): Promise<TUser | null> => {
+  // Fetch the user and populate their favorite companies
+  const user = await User.findById(userId)
+    .populate('favorites', 'name description logo website') // Populate company details
+    .select('favorites'); // Return only the favorites field
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  return user;
+};
+
 export const UserServices = {
   createUserIntoDB,
   getAllUsersFromDB,
@@ -56,4 +96,7 @@ export const UserServices = {
   updateUserRoleIntoDB,
   deleteUserIntoDB,
   subscribeUser,
+  addFavoriteCompany,
+  removeFavoriteCompany,
+  getAllFavoriteCompanies
 };

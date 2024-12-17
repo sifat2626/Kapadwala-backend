@@ -82,6 +82,57 @@ const subscribeUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
         data: result,
     });
 }));
+const addFavoriteCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.user._id;
+    const { companyId } = req.params;
+    console.log(userId, companyId);
+    const user = yield user_service_1.UserServices.addFavoriteCompany(userId, companyId);
+    // Add a null check to ensure user is valid
+    if (!user) {
+        return (0, sendResponse_1.default)(res, {
+            statusCode: http_status_1.default.NOT_FOUND,
+            success: false,
+            message: 'User not found.',
+            data: null,
+        });
+    }
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Company added to favorites successfully.',
+        data: user.favorites,
+    });
+}));
+const removeFavoriteCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.user._id;
+    const { companyId } = req.params;
+    const user = yield user_service_1.UserServices.removeFavoriteCompany(userId, companyId);
+    // Add a null check
+    if (!user) {
+        return (0, sendResponse_1.default)(res, {
+            statusCode: http_status_1.default.NOT_FOUND,
+            success: false,
+            message: 'User not found.',
+            data: null,
+        });
+    }
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Company removed from favorites successfully.',
+        data: user.favorites,
+    });
+}));
+const getAllFavoriteCompanies = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.user._id;
+    const user = yield user_service_1.UserServices.getAllFavoriteCompanies(userId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Favorite companies retrieved successfully.',
+        data: user === null || user === void 0 ? void 0 : user.favorites,
+    });
+}));
 exports.UserControllers = {
     createUser,
     getAllUsers,
@@ -89,4 +140,7 @@ exports.UserControllers = {
     updateUserRole,
     deleteUser,
     subscribeUser,
+    addFavoriteCompany,
+    removeFavoriteCompany,
+    getAllFavoriteCompanies
 };

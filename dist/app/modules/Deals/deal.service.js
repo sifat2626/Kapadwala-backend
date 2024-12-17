@@ -297,6 +297,24 @@ const getActiveCreditcardDeals = () => __awaiter(void 0, void 0, void 0, functio
         .populate('companyId', 'name'); // Populate company details
     return deals;
 });
+const getExpiringCreditcardDealsByVendor = (vendorName) => __awaiter(void 0, void 0, void 0, function* () {
+    const currentDate = new Date();
+    // Find the vendor by name
+    const vendor = yield vendor_model_1.Vendor.findOne({ name: vendorName });
+    if (!vendor)
+        throw new Error('Vendor not found');
+    // Fetch credit card deals for the vendor that are expiring soon
+    const deals = yield deals_model_1.Deal.find({
+        type: 'creditcard', // Only credit card deals
+        isActive: true, // Only active deals
+        expiryDate: { $gte: currentDate }, // Deals that haven't expired yet
+        vendorId: vendor._id, // Filter by vendor ID
+    })
+        .sort({ expiryDate: 1 }) // Sort by expiry date (soonest first)
+        .populate('vendorId', 'name logo website') // Populate vendor details
+        .populate('companyId', 'name'); // Populate company details
+    return deals;
+});
 exports.DealServices = {
     getAllDeals,
     getAllActiveDeals,
@@ -305,6 +323,7 @@ exports.DealServices = {
     getActiveCashbackDeals,
     getActiveGiftcardDeals,
     getActiveCreditcardDeals,
+    getExpiringCreditcardDealsByVendor,
     getTopDeals,
     processCSVData,
 };

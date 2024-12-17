@@ -20,6 +20,8 @@ router.get('/cashback-rate/:companyName', DealControllers.getBestCashbackRateByC
 
 router.get('/giftcard-rate/:companyName', DealControllers.getBestGiftcardRateByCompany);
 
+router.get('/creditcard/expiring-soon/:vendorName', DealControllers.getExpiringCreditcardDealsByVendor);
+
 router.get('/giftcard/active', DealControllers.getActiveGiftcardDeals);
 
 router.get('/cashback/active', DealControllers.getActiveCashbackDeals);

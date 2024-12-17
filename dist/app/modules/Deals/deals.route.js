@@ -17,6 +17,7 @@ deal_controller_1.DealControllers.uploadDealsFromCSV);
 router.get('/active', deal_controller_1.DealControllers.getAllActiveDeals);
 router.get('/cashback-rate/:companyName', deal_controller_1.DealControllers.getBestCashbackRateByCompany);
 router.get('/giftcard-rate/:companyName', deal_controller_1.DealControllers.getBestGiftcardRateByCompany);
+router.get('/creditcard/expiring-soon/:vendorName', deal_controller_1.DealControllers.getExpiringCreditcardDealsByVendor);
 router.get('/giftcard/active', deal_controller_1.DealControllers.getActiveGiftcardDeals);
 router.get('/cashback/active', deal_controller_1.DealControllers.getActiveCashbackDeals);
 router.get('/creditcard/active', deal_controller_1.DealControllers.getActiveCreditcardDeals);

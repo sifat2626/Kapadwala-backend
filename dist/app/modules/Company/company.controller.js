@@ -54,6 +54,17 @@ const getDealsByCompanyName = (0, catchAsync_1.default)((req, res) => __awaiter(
         data: deals,
     });
 }));
+const getActiveDealsByCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { companyName } = req.params;
+    const { type } = req.query; // Optional type filter
+    const deals = yield company_service_1.CompanyService.getActiveDealsByCompany(companyName, type);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: `Active deals for company '${companyName}'${type ? ` of type '${type}'` : ''} retrieved successfully.`,
+        data: deals,
+    });
+}));
 const updateCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const company = yield company_service_1.CompanyService.updateCompany(req.params.id, req.body);
     (0, sendResponse_1.default)(res, {
@@ -77,6 +88,7 @@ exports.CompanyController = {
     getAllCompanies,
     getCompanyById,
     getDealsByCompanyName,
+    getActiveDealsByCompany,
     updateCompany,
     deleteCompany,
 };

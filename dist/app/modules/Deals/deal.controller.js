@@ -107,6 +107,16 @@ const getActiveCreditcardDeals = (0, catchAsync_1.default)((req, res) => __await
         data: deals,
     });
 }));
+const getExpiringCreditcardDealsByVendor = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { vendorName } = req.params;
+    const deals = yield deal_service_1.DealServices.getExpiringCreditcardDealsByVendor(vendorName);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: `Expiring credit card deals for vendor '${vendorName}' retrieved successfully.`,
+        data: deals,
+    });
+}));
 exports.DealControllers = {
     uploadDealsFromCSV,
     getAllActiveDeals,
@@ -117,4 +127,5 @@ exports.DealControllers = {
     getActiveGiftcardDeals,
     getActiveCashbackDeals,
     getActiveCreditcardDeals,
+    getExpiringCreditcardDealsByVendor
 };

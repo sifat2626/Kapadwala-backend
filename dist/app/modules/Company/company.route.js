@@ -13,6 +13,7 @@ router.post('/', (0, validateRequest_1.default)(company_validation_1.CompanyVali
 router.get('/', company_controller_1.CompanyController.getAllCompanies);
 router.get('/:id', company_controller_1.CompanyController.getCompanyById);
 router.get('/deals/:companyName', company_controller_1.CompanyController.getDealsByCompanyName);
+router.get('/active-deals/:companyName', company_controller_1.CompanyController.getActiveDealsByCompany);
 router.patch('/:id', (0, validateRequest_1.default)(company_validation_1.CompanyValidation.updateCompany), company_controller_1.CompanyController.updateCompany);
 router.delete('/:id', company_controller_1.CompanyController.deleteCompany);
 exports.CompanyRoutes = router;
