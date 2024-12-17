@@ -5,6 +5,7 @@ const auth_route_1 = require("../modules/Auth/auth.route");
 const user_route_1 = require("../modules/User/user.route");
 const deals_route_1 = require("../modules/Deals/deals.route");
 const vendor_route_1 = require("../modules/Vendor/vendor.route");
+const company_route_1 = require("../modules/Company/company.route");
 const router = (0, express_1.Router)();
 const moduleRoutes = [
     {
@@ -22,6 +23,10 @@ const moduleRoutes = [
     {
         path: '/vendors',
         route: vendor_route_1.VendorRoutes,
+    },
+    {
+        path: '/companies',
+        route: company_route_1.CompanyRoutes,
     },
 ];
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

@@ -24,4 +24,6 @@ const companySchema = new Schema<TCompany, CompanyModel>(
   },
 );
 
+
+
 export const Company = model<TCompany, CompanyModel>('Company', companySchema);

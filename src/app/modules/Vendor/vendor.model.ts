@@ -21,4 +21,5 @@ const vendorSchema = new Schema<TVendor, VendorModel>(
   },
 );
 
+
 export const Vendor = model<TVendor, VendorModel>('Vendor', vendorSchema);

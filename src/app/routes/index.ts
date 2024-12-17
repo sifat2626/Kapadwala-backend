@@ -4,6 +4,7 @@ import { AuthRoutes } from '../modules/Auth/auth.route'
 import { UserRoutes } from '../modules/User/user.route'
 import { DealRoutes } from '../modules/Deals/deals.route'
 import { VendorRoutes } from '../modules/Vendor/vendor.route'
+import { CompanyRoutes } from '../modules/Company/company.route'
 
 const router = Router()
 
@@ -23,6 +24,10 @@ const moduleRoutes = [
   {
     path: '/vendors',
     route: VendorRoutes,
+  },
+  {
+    path: '/companies',
+    route: CompanyRoutes,
   },
 
 ]
