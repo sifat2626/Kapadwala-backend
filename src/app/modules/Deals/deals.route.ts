@@ -17,7 +17,7 @@ router.post(
 // Get all deals
 router.get(
   '/',
-  auth(USER_ROLE.user), // Authenticated users can access deals
+  auth(USER_ROLE.user,USER_ROLE.admin), // Authenticated users can access deals
   DealControllers.getAllDeals,
 );
 

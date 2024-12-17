@@ -21,7 +21,6 @@ const vendor_model_1 = require("../Vendor/vendor.model");
 // Process CSV Data
 const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
     const deals = [];
-    // Parse CSV data from the buffer
     yield new Promise((resolve, reject) => {
         const bufferStream = new stream_1.PassThrough();
         bufferStream.end(buffer);
@@ -37,55 +36,35 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
         newCompanies: 0,
         newVendors: 0,
     };
-    // Resolve or create companies and vendors in batches for efficiency
     const companyMap = new Map();
     const vendorMap = new Map();
-    // Populate existing companies and vendors
     const existingCompanies = yield company_model_1.Company.find();
     const existingVendors = yield vendor_model_1.Vendor.find();
     existingCompanies.forEach((company) => companyMap.set(company.name, company._id));
     existingVendors.forEach((vendor) => vendorMap.set(vendor.name, vendor._id));
     for (const deal of deals) {
         const { title, percentage, type, vendorName, companyName, expiryDate, link } = deal;
-        // Validate required fields
         if (!title || !percentage || !type || !vendorName || !companyName || !expiryDate || !link) {
             console.error(`Invalid deal entry, skipping: ${JSON.stringify(deal)}`);
             continue;
         }
-        // Resolve or create the company
         let companyId = companyMap.get(companyName);
         if (!companyId) {
-            const newCompany = yield company_model_1.Company.create({
-                name: companyName,
-                description: `${companyName} auto-created from CSV`,
-                logo: '',
-                website: '',
-            });
+            const newCompany = yield company_model_1.Company.create({ name: companyName, logo: '', website: '' });
             companyId = newCompany._id;
             companyMap.set(companyName, companyId);
             results.newCompanies++;
         }
-        // Resolve or create the vendor
         let vendorId = vendorMap.get(vendorName);
         if (!vendorId) {
-            const newVendor = yield vendor_model_1.Vendor.create({
-                name: vendorName,
-                logo: '',
-                website: '',
-            });
+            const newVendor = yield vendor_model_1.Vendor.create({ name: vendorName, logo: '', website: '' });
             vendorId = newVendor._id;
             vendorMap.set(vendorName, vendorId);
             results.newVendors++;
         }
-        // Check if the deal already exists
-        const existingDeal = yield deals_model_1.Deal.findOne({
-            title,
-            vendorId,
-            companyId,
-        });
+        const existingDeal = yield deals_model_1.Deal.findOne({ title, vendorId, companyId });
         if (existingDeal) {
             existingDeal.percentage = percentage;
-            // existingDeal.type = type;
             existingDeal.expiryDate = new Date(expiryDate);
             existingDeal.link = link;
             existingDeal.isActive = new Date(expiryDate) > new Date();
@@ -111,21 +90,25 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
 // Fetch All Deals
 const getAllDeals = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const { type, vendorName, companyName, page = 1, limit = 10 } = query;
-    // Build filters dynamically
     const filters = {};
     if (type)
         filters.type = type;
-    if (vendorName)
-        filters.vendorId = yield getVendorIdByName(vendorName);
-    if (companyName)
-        filters.companyId = yield getCompanyIdByName(companyName);
-    // Pagination setup
+    if (vendorName) {
+        const vendorId = yield getVendorIdByName(vendorName);
+        if (vendorId)
+            filters.vendorId = vendorId;
+    }
+    if (companyName) {
+        const companyId = yield getCompanyIdByName(companyName);
+        if (companyId)
+            filters.companyId = companyId;
+    }
     const skip = (page - 1) * limit;
     const deals = yield deals_model_1.Deal.find(filters)
         .skip(skip)
         .limit(limit)
-        .populate('vendorId')
-        .populate('companyId');
+        .populate('vendorId', 'name logo website') // Populate vendor details
+        .populate('companyId', 'name'); // Populate company name
     const total = yield deals_model_1.Deal.countDocuments(filters);
     return {
         meta: {
@@ -138,84 +121,45 @@ const getAllDeals = (query) => __awaiter(void 0, void 0, void 0, function* () {
 });
 // Fetch Top Deals
 const getTopDeals = () => __awaiter(void 0, void 0, void 0, function* () {
-    // Step 1: Find the best cashback deals
     const cashbackDeals = yield deals_model_1.Deal.aggregate([
-        { $match: { type: 'cashback', isActive: true } }, // Only active cashback deals
-        { $sort: { percentage: -1 } }, // Sort by highest percentage
-        {
-            $group: {
-                _id: '$companyId', // Group by company
-                bestCashbackDeal: { $first: '$$ROOT' }, // Pick the best cashback deal for each company
-            },
-        },
+        { $match: { type: 'cashback', isActive: true } },
+        { $sort: { percentage: -1 } },
+        { $group: { _id: '$companyId', bestCashbackDeal: { $first: '$$ROOT' } } },
     ]);
-    // Step 2: Find the best gift card deals
     const giftcardDeals = yield deals_model_1.Deal.aggregate([
-        { $match: { type: 'giftcard', isActive: true } }, // Only active gift card deals
-        { $sort: { percentage: -1 } }, // Sort by highest percentage
-        {
-            $group: {
-                _id: '$companyId', // Group by company
-                bestGiftcardDeal: { $first: '$$ROOT' }, // Pick the best gift card deal for each company
-            },
-        },
+        { $match: { type: 'giftcard', isActive: true } },
+        { $sort: { percentage: -1 } },
+        { $group: { _id: '$companyId', bestGiftcardDeal: { $first: '$$ROOT' } } },
     ]);
-    // Step 3: Find Amex and Chase deals
-    const creditCardDeals = yield deals_model_1.Deal.aggregate([
-        {
-            $match: {
-                type: 'creditcard',
-                isActive: true,
-                companyId: { $in: ['AmexID', 'ChaseID'] }, // Replace with actual Amex and Chase IDs
-            },
-        },
-        { $sort: { percentage: -1 } }, // Sort by highest percentage
-    ]);
-    // Step 4: Combine all the information by company
-    const topDealsByCompany = [];
+    const creditCardDeals = yield deals_model_1.Deal.find({ type: 'creditcard', isActive: true })
+        .sort({ percentage: -1 })
+        .populate('vendorId', 'name logo website'); // Fetch vendor details
     const cashbackMap = new Map();
     const giftcardMap = new Map();
+    const creditCardMap = new Map();
     cashbackDeals.forEach((deal) => cashbackMap.set(deal._id.toString(), deal.bestCashbackDeal));
     giftcardDeals.forEach((deal) => giftcardMap.set(deal._id.toString(), deal.bestGiftcardDeal));
-    const companyIds = [...new Set([...cashbackMap.keys(), ...giftcardMap.keys()])];
-    const companies = yield company_model_1.Company.find({ _id: { $in: companyIds } });
-    for (const company of companies) {
-        const companyId = company._id.toString();
-        const bestCashbackDeal = cashbackMap.get(companyId);
-        const bestGiftcardDeal = giftcardMap.get(companyId);
-        // Filter credit card deals for this company
-        const relevantCreditCardDeals = creditCardDeals.filter((deal) => deal.companyId.toString() === companyId);
-        // Determine the top rate for sorting
-        const bestRate = Math.max((bestCashbackDeal === null || bestCashbackDeal === void 0 ? void 0 : bestCashbackDeal.percentage) || 0, (bestGiftcardDeal === null || bestGiftcardDeal === void 0 ? void 0 : bestGiftcardDeal.percentage) || 0);
-        topDealsByCompany.push({
-            company: {
-                id: companyId,
-                name: company.name,
-            },
-            bestRate, // Use this for sorting
-            bestCashbackDeal: bestCashbackDeal
-                ? {
-                    vendor: yield vendor_model_1.Vendor.findById(bestCashbackDeal.vendorId),
-                    percentage: bestCashbackDeal.percentage,
-                    link: bestCashbackDeal.link,
-                }
-                : null,
-            bestGiftcardDeal: bestGiftcardDeal
-                ? {
-                    vendor: yield vendor_model_1.Vendor.findById(bestGiftcardDeal.vendorId),
-                    percentage: bestGiftcardDeal.percentage,
-                    link: bestGiftcardDeal.link,
-                }
-                : null,
-            creditCardDeals: relevantCreditCardDeals.map((deal) => ({
-                type: deal.type,
-                percentage: deal.percentage,
-                link: deal.link,
-            })),
+    creditCardDeals.forEach((deal) => {
+        const companyId = deal.companyId.toString();
+        if (!creditCardMap.has(companyId))
+            creditCardMap.set(companyId, []);
+        creditCardMap.get(companyId).push({
+            vendor: deal.vendorId, // Includes vendor name, logo, and website
+            percentage: deal.percentage,
+            link: deal.link,
         });
-    }
-    // Step 5: Sort companies by the best rate in descending order
-    return topDealsByCompany.sort((a, b) => b.bestRate - a.bestRate);
+    });
+    const companyIds = [...new Set([...cashbackMap.keys(), ...giftcardMap.keys(), ...creditCardMap.keys()])];
+    const companies = yield company_model_1.Company.find({ _id: { $in: companyIds } });
+    return companies.map((company) => {
+        const companyId = company._id.toString();
+        return {
+            company: { id: companyId, name: company.name },
+            bestCashbackDeal: cashbackMap.get(companyId) || null,
+            bestGiftcardDeal: giftcardMap.get(companyId) || null,
+            creditCardDeals: creditCardMap.get(companyId) || [],
+        };
+    });
 });
 // Helper: Get Vendor ID by Name
 const getVendorIdByName = (name) => __awaiter(void 0, void 0, void 0, function* () {

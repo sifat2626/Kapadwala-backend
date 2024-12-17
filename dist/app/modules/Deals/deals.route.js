@@ -15,7 +15,7 @@ router.post('/upload-csv', (0, auth_1.default)(user_constant_1.USER_ROLE.admin),
 upload_1.upload.single('file'), // Accepts a single file with the key 'file'
 deal_controller_1.DealControllers.uploadDealsFromCSV);
 // Get all deals
-router.get('/', (0, auth_1.default)(user_constant_1.USER_ROLE.user), // Authenticated users can access deals
+router.get('/', (0, auth_1.default)(user_constant_1.USER_ROLE.user, user_constant_1.USER_ROLE.admin), // Authenticated users can access deals
 deal_controller_1.DealControllers.getAllDeals);
 // Get top deals
 router.get('/top', (0, auth_1.default)(user_constant_1.USER_ROLE.user, user_constant_1.USER_ROLE.admin), // Authenticated users can access top deals

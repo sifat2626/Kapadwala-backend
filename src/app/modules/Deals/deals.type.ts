@@ -1,5 +1,6 @@
 import { Model, Schema } from 'mongoose'
 
+
 export type TDealType = 'cashback' | 'giftcard' | 'creditcard';
 
 export type TDeal = {
@@ -7,11 +8,11 @@ export type TDeal = {
   title: string;
   percentage: number;
   type: TDealType;
-  vendorId: Schema.Types.ObjectId; // Reference to Vendor
-  companyId: Schema.Types.ObjectId; // Reference to Company
+  vendorId: Schema.Types.ObjectId
+  companyId: Schema.Types.ObjectId
   expiryDate: Date;
   link: string;
-  isActive: boolean; // Whether the deal is currently active
+  isActive: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 };
