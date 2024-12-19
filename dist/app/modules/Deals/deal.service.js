@@ -204,7 +204,7 @@ const getTopDeals = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
     // Return with meta
     return (0, returnWithMeta_1.returnWithMeta)({ total, limit, page }, data);
 });
-const getBestCashbackRateByCompany = (companyName_1, page_1, ...args_1) => __awaiter(void 0, [companyName_1, page_1, ...args_1], void 0, function* (companyName, page, limit = 10) {
+const getBestCashbackRateByCompany = (companyName_1, ...args_1) => __awaiter(void 0, [companyName_1, ...args_1], void 0, function* (companyName, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
     // Fetch all cashback deals for the given company (active and expired)
     const deals = yield deals_model_1.Deal.aggregate([
@@ -274,7 +274,7 @@ const getBestCashbackRateByCompany = (companyName_1, page_1, ...args_1) => __awa
         data: formattedDeals,
     };
 });
-const getBestGiftcardRateByCompany = (companyName_1, page_1, ...args_1) => __awaiter(void 0, [companyName_1, page_1, ...args_1], void 0, function* (companyName, page, limit = 10) {
+const getBestGiftcardRateByCompany = (companyName_1, ...args_1) => __awaiter(void 0, [companyName_1, ...args_1], void 0, function* (companyName, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
     // Fetch gift card deals for the given company with pagination
     const deals = yield deals_model_1.Deal.aggregate([
@@ -344,7 +344,7 @@ const getBestGiftcardRateByCompany = (companyName_1, page_1, ...args_1) => __awa
         data: formattedDeals,
     };
 });
-const getActiveCashbackDeals = (page_1, ...args_1) => __awaiter(void 0, [page_1, ...args_1], void 0, function* (page, limit = 10) {
+const getActiveCashbackDeals = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (page = 1, limit = 10) {
     const skip = (page - 1) * limit;
     const currentDate = new Date();
     // Fetch all active cashback deals with pagination
@@ -374,7 +374,7 @@ const getActiveCashbackDeals = (page_1, ...args_1) => __awaiter(void 0, [page_1,
         data: deals,
     };
 });
-const getActiveGiftcardDeals = (page_1, ...args_1) => __awaiter(void 0, [page_1, ...args_1], void 0, function* (page, limit = 10) {
+const getActiveGiftcardDeals = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (page = 1, limit = 10) {
     const skip = (page - 1) * limit;
     const currentDate = new Date();
     // Fetch all active gift card deals with pagination and sorting
@@ -404,7 +404,7 @@ const getActiveGiftcardDeals = (page_1, ...args_1) => __awaiter(void 0, [page_1,
         data: deals,
     };
 });
-const getActiveCreditcardDeals = (page_1, ...args_1) => __awaiter(void 0, [page_1, ...args_1], void 0, function* (page, limit = 10) {
+const getActiveCreditcardDeals = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (page = 1, limit = 10) {
     const skip = (page - 1) * limit;
     const currentDate = new Date();
     // Fetch all active credit card deals with pagination and sorting
@@ -434,7 +434,7 @@ const getActiveCreditcardDeals = (page_1, ...args_1) => __awaiter(void 0, [page_
         data: deals,
     };
 });
-const getExpiringCreditcardDealsByVendor = (vendorName_1, page_1, ...args_1) => __awaiter(void 0, [vendorName_1, page_1, ...args_1], void 0, function* (vendorName, page, limit = 10) {
+const getExpiringCreditcardDealsByVendor = (vendorName_1, ...args_1) => __awaiter(void 0, [vendorName_1, ...args_1], void 0, function* (vendorName, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
     const currentDate = new Date();
     // Find the vendor by name

@@ -17,8 +17,19 @@ const getAllUsersFromDB = async (query: any) => {
   const result = await User.find().limit(limitNum).skip(skip);
   const total = await User.countDocuments();
 
-  returnWithMeta({ total, limit: limitNum, page: pageNum }, result);
+  const totalPage = Math.ceil(total / limitNum);
+
+  return {
+    meta: {
+      total,
+      limit: limitNum,
+      page: pageNum,
+      totalPage, // Add totalPage here
+    },
+    result,
+  };
 };
+
 
 const getMe = async (email: string): Promise<TUser | null> => {
   const user = await User.findOne({ email });

@@ -24,7 +24,16 @@ const getAllUsersFromDB = (query) => __awaiter(void 0, void 0, void 0, function*
     const skip = (pageNum - 1) * limitNum;
     const result = yield user_model_1.User.find().limit(limitNum).skip(skip);
     const total = yield user_model_1.User.countDocuments();
-    (0, returnWithMeta_1.returnWithMeta)({ total, limit: limitNum, page: pageNum }, result);
+    const totalPage = Math.ceil(total / limitNum);
+    return {
+        meta: {
+            total,
+            limit: limitNum,
+            page: pageNum,
+            totalPage, // Add totalPage here
+        },
+        result,
+    };
 });
 const getMe = (email) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findOne({ email });

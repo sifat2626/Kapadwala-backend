@@ -240,7 +240,7 @@ const getTopDeals = async (query: any = {}): Promise<any> => {
   return returnWithMeta({ total, limit, page }, data);
 };
 
-const getBestCashbackRateByCompany = async (companyName: string, page?: Query, limit = 10) => {
+const getBestCashbackRateByCompany = async (companyName: string, page: number = 1, limit: number = 10) => {
   const skip = (page - 1) * limit;
 
   // Fetch all cashback deals for the given company (active and expired)
@@ -316,7 +316,7 @@ const getBestCashbackRateByCompany = async (companyName: string, page?: Query, l
   };
 };
 
-const getBestGiftcardRateByCompany = async (companyName: string, page?: Query, limit = 10) => {
+const getBestGiftcardRateByCompany = async (companyName: string, page: number = 1, limit: number = 10) => {
   const skip = (page - 1) * limit;
 
   // Fetch gift card deals for the given company with pagination
@@ -393,7 +393,7 @@ const getBestGiftcardRateByCompany = async (companyName: string, page?: Query, l
 };
 
 
-const getActiveCashbackDeals = async (page?: Query, limit = 10) => {
+const getActiveCashbackDeals = async (page: number = 1, limit: number = 10) => {
   const skip = (page - 1) * limit;
   const currentDate = new Date();
 
@@ -428,7 +428,7 @@ const getActiveCashbackDeals = async (page?: Query, limit = 10) => {
 };
 
 
-const getActiveGiftcardDeals = async (page?: Query, limit = 10) => {
+const getActiveGiftcardDeals = async (page: number = 1, limit: number = 10) => {
   const skip = (page - 1) * limit;
   const currentDate = new Date();
 
@@ -463,7 +463,7 @@ const getActiveGiftcardDeals = async (page?: Query, limit = 10) => {
 };
 
 
-const getActiveCreditcardDeals = async (page?: Query, limit = 10) => {
+const getActiveCreditcardDeals = async (page: number = 1, limit: number = 10) => {
   const skip = (page - 1) * limit;
   const currentDate = new Date();
 
@@ -498,7 +498,7 @@ const getActiveCreditcardDeals = async (page?: Query, limit = 10) => {
 };
 
 
-const getExpiringCreditcardDealsByVendor = async (vendorName: string, page?: Query, limit = 10) => {
+const getExpiringCreditcardDealsByVendor = async (vendorName: string, page: number = 1, limit: number = 10) => {
   const skip = (page - 1) * limit;
   const currentDate = new Date();
 
