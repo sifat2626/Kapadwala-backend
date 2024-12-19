@@ -15,10 +15,6 @@ export const NewsletterService = {
       return;
     }
 
-    console.log(users);
-
-
-
     // Step 3: Prepare the newsletter content
     const dealsHtml = top10Deals
       .map((deal) => {
@@ -37,8 +33,8 @@ export const NewsletterService = {
         const creditCards = deal.creditCardDeals.length
           ? deal.creditCardDeals
             .map(
-              (creditDeal: { vendor: { name: any; }; percentage: any; link: any; }) => `
-                  <li><strong>Credit Card:</strong> ${creditDeal.vendor?.name || 'N/A'} - ${creditDeal.percentage}% off
+              (creditDeal: { vendor: { name: any; };title:any; link: any; }) => `
+                  <li><strong>Credit Card:</strong> ${creditDeal.vendor?.name || 'N/A'} - ${creditDeal.title}
                     <br/> <a href="${creditDeal.link}" target="_blank">View Credit Card Deal</a>
                   </li>`
             )

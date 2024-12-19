@@ -24,7 +24,6 @@ exports.NewsletterService = {
             console.log('No subscribed users found.');
             return;
         }
-        console.log(users);
         // Step 3: Prepare the newsletter content
         const dealsHtml = top10Deals
             .map((deal) => {
@@ -43,7 +42,7 @@ exports.NewsletterService = {
                     .map((creditDeal) => {
                     var _a;
                     return `
-                  <li><strong>Credit Card:</strong> ${((_a = creditDeal.vendor) === null || _a === void 0 ? void 0 : _a.name) || 'N/A'} - ${creditDeal.percentage}% off
+                  <li><strong>Credit Card:</strong> ${((_a = creditDeal.vendor) === null || _a === void 0 ? void 0 : _a.name) || 'N/A'} - ${creditDeal.title}
                     <br/> <a href="${creditDeal.link}" target="_blank">View Credit Card Deal</a>
                   </li>`;
                 })
