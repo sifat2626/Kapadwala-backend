@@ -23,7 +23,16 @@ const getAllVendors = (query) => __awaiter(void 0, void 0, void 0, function* () 
         .skip(skip)
         .limit(Number(limit));
     const total = yield vendor_model_1.Vendor.countDocuments();
-    return { vendors, total };
+    const totalPage = Math.ceil(total / Number(limit)); // Calculate total pages
+    return {
+        meta: {
+            total,
+            limit: Number(limit),
+            page: Number(page),
+            totalPage, // Include totalPage in the meta
+        },
+        data: vendors,
+    };
 });
 const getVendorById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const vendor = yield vendor_model_1.Vendor.findById(id);
@@ -31,20 +40,37 @@ const getVendorById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error('Vendor not found');
     return vendor;
 });
-const getDealsByVendorName = (vendorName) => __awaiter(void 0, void 0, void 0, function* () {
+const getDealsByVendorName = (vendorName, query) => __awaiter(void 0, void 0, void 0, function* () {
+    const { page = 1, limit = 10 } = query;
+    const skip = (page - 1) * Number(limit);
     // Find the vendor by name
     const vendor = yield vendor_model_1.Vendor.findOne({ name: vendorName });
     if (!vendor)
         throw new Error('Vendor not found');
     const currentDate = new Date();
-    // Fetch all non-expired deals related to this vendor
+    // Fetch all non-expired deals related to this vendor with pagination
     const deals = yield deals_model_1.Deal.find({
         vendorId: vendor._id,
         expiryDate: { $gte: currentDate }, // Filter only active (non-expired) deals
     })
+        .skip(skip)
+        .limit(Number(limit))
         .populate('vendorId', 'name logo website') // Populate vendor details
         .populate('companyId', 'name'); // Populate company name for reference
-    return deals;
+    const total = yield deals_model_1.Deal.countDocuments({
+        vendorId: vendor._id,
+        expiryDate: { $gte: currentDate },
+    });
+    const totalPage = Math.ceil(total / Number(limit)); // Calculate total pages
+    return {
+        meta: {
+            total,
+            limit: Number(limit),
+            page: Number(page),
+            totalPage,
+        },
+        data: deals,
+    };
 });
 const updateVendor = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     const vendor = yield vendor_model_1.Vendor.findByIdAndUpdate(id, data, { new: true, runValidators: true });

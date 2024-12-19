@@ -7,6 +7,7 @@ const returnWithMeta = (metaData, data) => {
             total: metaData.total,
             limit: metaData.limit,
             page: metaData.page,
+            totalPage: metaData.totalPage
         },
         data,
     };

@@ -34,7 +34,7 @@ const getAllUsers = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Users retrieved successfully.',
-        meta: result.meta,
+        meta: result.meta, // Include meta information
         data: result.result,
     });
 }));
@@ -82,12 +82,11 @@ const subscribeUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
         data: result,
     });
 }));
+// Add a company to the user's favorites
 const addFavoriteCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.user._id;
     const { companyId } = req.params;
-    console.log(userId, companyId);
     const user = yield user_service_1.UserServices.addFavoriteCompany(userId, companyId);
-    // Add a null check to ensure user is valid
     if (!user) {
         return (0, sendResponse_1.default)(res, {
             statusCode: http_status_1.default.NOT_FOUND,
@@ -103,11 +102,11 @@ const addFavoriteCompany = (0, catchAsync_1.default)((req, res) => __awaiter(voi
         data: user.favorites,
     });
 }));
+// Remove a company from the user's favorites
 const removeFavoriteCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.user._id;
     const { companyId } = req.params;
     const user = yield user_service_1.UserServices.removeFavoriteCompany(userId, companyId);
-    // Add a null check
     if (!user) {
         return (0, sendResponse_1.default)(res, {
             statusCode: http_status_1.default.NOT_FOUND,
@@ -123,14 +122,16 @@ const removeFavoriteCompany = (0, catchAsync_1.default)((req, res) => __awaiter(
         data: user.favorites,
     });
 }));
+// Get all favorite companies for the logged-in user
 const getAllFavoriteCompanies = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.user._id;
-    const user = yield user_service_1.UserServices.getAllFavoriteCompanies(userId);
+    const result = yield user_service_1.UserServices.getAllFavoriteCompanies(userId, req.query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Favorite companies retrieved successfully.',
-        data: user === null || user === void 0 ? void 0 : user.favorites,
+        meta: result.meta, // Include meta information
+        data: result.data,
     });
 }));
 exports.UserControllers = {
@@ -142,5 +143,5 @@ exports.UserControllers = {
     subscribeUser,
     addFavoriteCompany,
     removeFavoriteCompany,
-    getAllFavoriteCompanies
+    getAllFavoriteCompanies,
 };

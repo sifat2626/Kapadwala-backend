@@ -1,8 +1,10 @@
 export interface MetaData {
   total: number;
-  limit?: number;
-  page?: number;
+  limit: number;
+  page: number;
+  totalPage?: number; // Add this line
 }
+
 
 export const returnWithMeta = <T>(metaData: MetaData, data: T): { meta: MetaData; data: T } => {
   return {
@@ -10,6 +12,7 @@ export const returnWithMeta = <T>(metaData: MetaData, data: T): { meta: MetaData
       total: metaData.total,
       limit: metaData.limit,
       page: metaData.page,
+      totalPage: metaData.totalPage
     },
     data,
   };

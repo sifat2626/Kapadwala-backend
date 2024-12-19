@@ -12,23 +12,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserServices = void 0;
 const user_model_1 = require("./user.model");
 const company_model_1 = require("../Company/company.model");
+const returnWithMeta_1 = require("../../utils/returnWithMeta");
 const createUserIntoDB = (userData) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.create(userData);
     return user;
 });
 const getAllUsersFromDB = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const { limit = 10, page = 1 } = query;
-    const skip = (page - 1) * limit;
-    const result = yield user_model_1.User.find().limit(limit).skip(skip);
+    const limitNum = Number(limit);
+    const pageNum = Number(page);
+    const skip = (pageNum - 1) * limitNum;
+    const result = yield user_model_1.User.find().limit(limitNum).skip(skip);
     const total = yield user_model_1.User.countDocuments();
-    return {
-        meta: {
-            total,
-            limit,
-            page,
-        },
-        result,
-    };
+    (0, returnWithMeta_1.returnWithMeta)({ total, limit: limitNum, page: pageNum }, result);
 });
 const getMe = (email) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findOne({ email });
@@ -52,30 +48,39 @@ const subscribeUser = (id) => __awaiter(void 0, void 0, void 0, function* () {
     return user;
 });
 const addFavoriteCompany = (userId, companyId) => __awaiter(void 0, void 0, void 0, function* () {
-    // Check if the company exists
     const company = yield company_model_1.Company.findById(companyId);
     if (!company)
         throw new Error('Company not found');
-    // Add the company to the user's favorites if not already added
     const user = yield user_model_1.User.findByIdAndUpdate(userId, { $addToSet: { favorites: companyId } }, // Prevent duplicates
     { new: true }).populate('favorites', 'name'); // Populate favorite companies
     return user;
 });
 const removeFavoriteCompany = (userId, companyId) => __awaiter(void 0, void 0, void 0, function* () {
-    // Remove the company from the user's favorites
     const user = yield user_model_1.User.findByIdAndUpdate(userId, { $pull: { favorites: companyId } }, // Remove the company ID
     { new: true }).populate('favorites', 'name');
     return user;
 });
-const getAllFavoriteCompanies = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    // Fetch the user and populate their favorite companies
+const getAllFavoriteCompanies = (userId, query) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const { limit = 10, page = 1 } = query;
+    const limitNum = Number(limit);
+    const pageNum = Number(page);
+    const skip = (pageNum - 1) * limitNum;
     const user = yield user_model_1.User.findById(userId)
-        .populate('favorites', 'name description logo website') // Populate company details
-        .select('favorites'); // Return only the favorites field
+        .populate({
+        path: 'favorites',
+        select: 'name description logo website',
+        options: {
+            skip,
+            limit: limitNum,
+        },
+    })
+        .select('favorites');
     if (!user) {
         throw new Error('User not found');
     }
-    return user;
+    const total = ((_a = user.favorites) === null || _a === void 0 ? void 0 : _a.length) || 0;
+    return (0, returnWithMeta_1.returnWithMeta)({ total, limit: limitNum, page: pageNum }, user.favorites);
 });
 exports.UserServices = {
     createUserIntoDB,
@@ -86,5 +91,5 @@ exports.UserServices = {
     subscribeUser,
     addFavoriteCompany,
     removeFavoriteCompany,
-    getAllFavoriteCompanies
+    getAllFavoriteCompanies,
 };

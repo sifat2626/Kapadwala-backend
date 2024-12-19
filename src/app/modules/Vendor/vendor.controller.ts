@@ -22,7 +22,8 @@ const getAllVendors: RequestHandler = catchAsync(async (req, res) => {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Vendors retrieved successfully.',
-    data: vendors,
+    meta: vendors.meta, // Include meta information
+    data: vendors.data, // Vendor data
   });
 });
 
@@ -39,14 +40,14 @@ const getVendorById: RequestHandler = catchAsync(async (req, res) => {
 
 const getDealsByVendorName: RequestHandler = catchAsync(async (req, res) => {
   const { vendorName } = req.params;
-
-  const deals = await VendorService.getDealsByVendorName(vendorName);
+  const deals = await VendorService.getDealsByVendorName(vendorName, req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: `Deals for vendor '${vendorName}' retrieved successfully.`,
-    data: deals,
+    meta: deals.meta, // Include meta information
+    data: deals.data, // Deals data
   });
 });
 
@@ -68,7 +69,7 @@ const deleteVendor: RequestHandler = catchAsync(async (req, res) => {
     statusCode: httpStatus.NO_CONTENT,
     success: true,
     message: 'Vendor deleted successfully.',
-    data:''
+    data: '',
   });
 });
 

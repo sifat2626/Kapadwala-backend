@@ -24,7 +24,7 @@ const getAllUsers: RequestHandler = catchAsync(async (req, res) => {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Users retrieved successfully.',
-    meta: result.meta,
+    meta: result.meta, // Include meta information
     data: result.result,
   });
 });
@@ -85,15 +85,13 @@ const subscribeUser: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+// Add a company to the user's favorites
 const addFavoriteCompany: RequestHandler = catchAsync(async (req, res) => {
-  const  userId  = req.user._id;
+  const userId = req.user._id;
   const { companyId } = req.params;
-
-  console.log(userId,companyId);
 
   const user = await UserServices.addFavoriteCompany(userId, companyId);
 
-  // Add a null check to ensure user is valid
   if (!user) {
     return sendResponse(res, {
       statusCode: httpStatus.NOT_FOUND,
@@ -111,14 +109,13 @@ const addFavoriteCompany: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
-
+// Remove a company from the user's favorites
 const removeFavoriteCompany: RequestHandler = catchAsync(async (req, res) => {
-  const  userId  = req.user._id;
+  const userId = req.user._id;
   const { companyId } = req.params;
 
   const user = await UserServices.removeFavoriteCompany(userId, companyId);
 
-  // Add a null check
   if (!user) {
     return sendResponse(res, {
       statusCode: httpStatus.NOT_FOUND,
@@ -136,21 +133,20 @@ const removeFavoriteCompany: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+// Get all favorite companies for the logged-in user
 const getAllFavoriteCompanies: RequestHandler = catchAsync(async (req, res) => {
-  const userId  = req.user._id;
+  const userId = req.user._id;
 
-  const user = await UserServices.getAllFavoriteCompanies(userId);
+  const result = await UserServices.getAllFavoriteCompanies(userId, req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Favorite companies retrieved successfully.',
-    data: user?.favorites,
+    meta: result.meta, // Include meta information
+    data: result.data,
   });
 });
-
-
-
 
 export const UserControllers = {
   createUser,
@@ -161,5 +157,5 @@ export const UserControllers = {
   subscribeUser,
   addFavoriteCompany,
   removeFavoriteCompany,
-  getAllFavoriteCompanies
+  getAllFavoriteCompanies,
 };

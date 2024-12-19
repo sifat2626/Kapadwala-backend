@@ -32,7 +32,8 @@ const getAllVendors = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Vendors retrieved successfully.',
-        data: vendors,
+        meta: vendors.meta, // Include meta information
+        data: vendors.data, // Vendor data
     });
 }));
 const getVendorById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -46,12 +47,13 @@ const getVendorById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
 }));
 const getDealsByVendorName = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { vendorName } = req.params;
-    const deals = yield vendor_service_1.VendorService.getDealsByVendorName(vendorName);
+    const deals = yield vendor_service_1.VendorService.getDealsByVendorName(vendorName, req.query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
         message: `Deals for vendor '${vendorName}' retrieved successfully.`,
-        data: deals,
+        meta: deals.meta, // Include meta information
+        data: deals.data, // Deals data
     });
 }));
 const updateVendor = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -69,7 +71,7 @@ const deleteVendor = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
         statusCode: http_status_1.default.NO_CONTENT,
         success: true,
         message: 'Vendor deleted successfully.',
-        data: ''
+        data: '',
     });
 }));
 exports.VendorController = {

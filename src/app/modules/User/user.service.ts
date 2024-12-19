@@ -1,27 +1,23 @@
 import { TUser } from './user.interface';
 import { User } from './user.model';
-import { Company } from '../Company/company.model'
+import { Company } from '../Company/company.model';
+import { returnWithMeta } from '../../utils/returnWithMeta';
 
 const createUserIntoDB = async (userData: Partial<TUser>): Promise<TUser> => {
   const user = await User.create(userData);
   return user;
 };
 
-const getAllUsersFromDB = async (query: any): Promise<{ meta: any; result: TUser[] }> => {
+const getAllUsersFromDB = async (query: any) => {
   const { limit = 10, page = 1 } = query;
-  const skip = (page - 1) * limit;
+  const limitNum = Number(limit);
+  const pageNum = Number(page);
+  const skip = (pageNum - 1) * limitNum;
 
-  const result = await User.find().limit(limit).skip(skip);
+  const result = await User.find().limit(limitNum).skip(skip);
   const total = await User.countDocuments();
 
-  return {
-    meta: {
-      total,
-      limit,
-      page,
-    },
-    result,
-  };
+  returnWithMeta({ total, limit: limitNum, page: pageNum }, result);
 };
 
 const getMe = async (email: string): Promise<TUser | null> => {
@@ -51,11 +47,9 @@ const subscribeUser = async (id: string): Promise<TUser | null> => {
 };
 
 const addFavoriteCompany = async (userId: string, companyId: string) => {
-  // Check if the company exists
   const company = await Company.findById(companyId);
   if (!company) throw new Error('Company not found');
 
-  // Add the company to the user's favorites if not already added
   const user = await User.findByIdAndUpdate(
     userId,
     { $addToSet: { favorites: companyId } }, // Prevent duplicates
@@ -66,7 +60,6 @@ const addFavoriteCompany = async (userId: string, companyId: string) => {
 };
 
 const removeFavoriteCompany = async (userId: string, companyId: string) => {
-  // Remove the company from the user's favorites
   const user = await User.findByIdAndUpdate(
     userId,
     { $pull: { favorites: companyId } }, // Remove the company ID
@@ -76,17 +69,29 @@ const removeFavoriteCompany = async (userId: string, companyId: string) => {
   return user;
 };
 
-const getAllFavoriteCompanies = async (userId: string): Promise<TUser | null> => {
-  // Fetch the user and populate their favorite companies
+const getAllFavoriteCompanies = async (userId: string, query: any): Promise<any> => {
+  const { limit = 10, page = 1 } = query;
+  const limitNum = Number(limit);
+  const pageNum = Number(page);
+  const skip = (pageNum - 1) * limitNum;
+
   const user = await User.findById(userId)
-    .populate('favorites', 'name description logo website') // Populate company details
-    .select('favorites'); // Return only the favorites field
+    .populate({
+      path: 'favorites',
+      select: 'name description logo website',
+      options: {
+        skip,
+        limit: limitNum,
+      },
+    })
+    .select('favorites');
 
   if (!user) {
     throw new Error('User not found');
   }
 
-  return user;
+  const total = user.favorites?.length || 0;
+  return returnWithMeta({ total, limit: limitNum, page: pageNum }, user.favorites);
 };
 
 export const UserServices = {
@@ -98,5 +103,5 @@ export const UserServices = {
   subscribeUser,
   addFavoriteCompany,
   removeFavoriteCompany,
-  getAllFavoriteCompanies
+  getAllFavoriteCompanies,
 };
