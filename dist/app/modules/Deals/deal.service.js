@@ -460,12 +460,15 @@ const getExpiringCreditcardDealsByVendor = (vendorName_1, ...args_1) => __awaite
         expiryDate: { $gte: currentDate },
         vendorId: vendor._id,
     });
+    // Calculate total pages
+    const totalPages = Math.ceil(total / limit);
     // Return the deals with meta information
     return {
         meta: {
             total,
             limit,
             page,
+            totalPages,
         },
         data: deals,
     };

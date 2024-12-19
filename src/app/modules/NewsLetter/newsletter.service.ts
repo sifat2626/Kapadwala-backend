@@ -17,7 +17,7 @@ export const NewsletterService = {
 
     // Step 3: Prepare the newsletter content
     const dealsHtml = top10Deals
-      .map((deal) => {
+      .map((deal: { bestCashbackDeal: { title: any; percentage: any; link: any; }; bestGiftcardDeal: { title: any; percentage: any; link: any; }; creditCardDeals: { vendor: { name: any; }; title: any; link: any; }[]; company: { name: any; }; }) => {
         const cashback = deal.bestCashbackDeal
           ? `<li><strong>Cashback:</strong> ${deal.bestCashbackDeal.title} (${deal.bestCashbackDeal.percentage}% off)
               <br/> <a href="${deal.bestCashbackDeal.link}" target="_blank">View Cashback Deal</a>

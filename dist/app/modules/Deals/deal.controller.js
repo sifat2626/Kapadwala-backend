@@ -74,7 +74,9 @@ const getTopDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
 }));
 const getBestCashbackRateByCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { companyName } = req.params;
-    const cashbackRates = yield deal_service_1.DealServices.getBestCashbackRateByCompany(companyName, req.query);
+    const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+    const cashbackRates = yield deal_service_1.DealServices.getBestCashbackRateByCompany(companyName, page, limit);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -84,7 +86,9 @@ const getBestCashbackRateByCompany = (0, catchAsync_1.default)((req, res) => __a
 }));
 const getBestGiftcardRateByCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { companyName } = req.params;
-    const giftcardRates = yield deal_service_1.DealServices.getBestGiftcardRateByCompany(companyName, req.query);
+    const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+    const giftcardRates = yield deal_service_1.DealServices.getBestGiftcardRateByCompany(companyName, page, limit);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -93,7 +97,9 @@ const getBestGiftcardRateByCompany = (0, catchAsync_1.default)((req, res) => __a
     });
 }));
 const getActiveCashbackDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const deals = yield deal_service_1.DealServices.getActiveCashbackDeals(req.query);
+    const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+    const deals = yield deal_service_1.DealServices.getActiveCashbackDeals(page, limit);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -102,7 +108,9 @@ const getActiveCashbackDeals = (0, catchAsync_1.default)((req, res) => __awaiter
     });
 }));
 const getActiveGiftcardDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const deals = yield deal_service_1.DealServices.getActiveGiftcardDeals(req.query);
+    const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+    const deals = yield deal_service_1.DealServices.getActiveGiftcardDeals(page, limit);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -111,7 +119,9 @@ const getActiveGiftcardDeals = (0, catchAsync_1.default)((req, res) => __awaiter
     });
 }));
 const getActiveCreditcardDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const deals = yield deal_service_1.DealServices.getActiveCreditcardDeals(req.query);
+    const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+    const deals = yield deal_service_1.DealServices.getActiveCreditcardDeals(page, limit);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -121,7 +131,9 @@ const getActiveCreditcardDeals = (0, catchAsync_1.default)((req, res) => __await
 }));
 const getExpiringCreditcardDealsByVendor = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { vendorName } = req.params;
-    const deals = yield deal_service_1.DealServices.getExpiringCreditcardDealsByVendor(vendorName, req.query);
+    const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+    const deals = yield deal_service_1.DealServices.getExpiringCreditcardDealsByVendor(vendorName, page, limit);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,

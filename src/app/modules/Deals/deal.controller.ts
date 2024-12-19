@@ -74,7 +74,9 @@ const getTopDeals: RequestHandler = catchAsync(async (req, res) => {
 
 const getBestCashbackRateByCompany: RequestHandler = catchAsync(async (req, res) => {
   const { companyName } = req.params;
-  const cashbackRates = await DealServices.getBestCashbackRateByCompany(companyName, req.query);
+  const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+  const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+  const cashbackRates = await DealServices.getBestCashbackRateByCompany(companyName, page,limit);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -86,7 +88,9 @@ const getBestCashbackRateByCompany: RequestHandler = catchAsync(async (req, res)
 
 const getBestGiftcardRateByCompany: RequestHandler = catchAsync(async (req, res) => {
   const { companyName } = req.params;
-  const giftcardRates = await DealServices.getBestGiftcardRateByCompany(companyName, req.query);
+  const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+  const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+  const giftcardRates = await DealServices.getBestGiftcardRateByCompany(companyName, page,limit);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -97,7 +101,10 @@ const getBestGiftcardRateByCompany: RequestHandler = catchAsync(async (req, res)
 });
 
 const getActiveCashbackDeals: RequestHandler = catchAsync(async (req, res) => {
-  const deals = await DealServices.getActiveCashbackDeals(req.query);
+  const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+  const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+
+  const deals = await DealServices.getActiveCashbackDeals(page,limit);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -108,7 +115,10 @@ const getActiveCashbackDeals: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const getActiveGiftcardDeals: RequestHandler = catchAsync(async (req, res) => {
-  const deals = await DealServices.getActiveGiftcardDeals(req.query);
+
+  const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+  const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+  const deals = await DealServices.getActiveGiftcardDeals(page,limit);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -119,7 +129,10 @@ const getActiveGiftcardDeals: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const getActiveCreditcardDeals: RequestHandler = catchAsync(async (req, res) => {
-  const deals = await DealServices.getActiveCreditcardDeals(req.query);
+
+  const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+  const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+  const deals = await DealServices.getActiveCreditcardDeals(page,limit);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -131,7 +144,10 @@ const getActiveCreditcardDeals: RequestHandler = catchAsync(async (req, res) => 
 
 const getExpiringCreditcardDealsByVendor: RequestHandler = catchAsync(async (req, res) => {
   const { vendorName } = req.params;
-  const deals = await DealServices.getExpiringCreditcardDealsByVendor(vendorName, req.query);
+  const page = Number(req.query.page) || 1; // Default to page 1 if not provided
+  const limit = Number(req.query.limit) || 10; // Default to limit 10 if not provided
+
+  const deals = await DealServices.getExpiringCreditcardDealsByVendor(vendorName, page, limit);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -140,6 +156,7 @@ const getExpiringCreditcardDealsByVendor: RequestHandler = catchAsync(async (req
     data: deals,
   });
 });
+
 
 // Delete old deals by exact date or days
 const deleteOldDeals: RequestHandler = catchAsync(async (req, res) => {

@@ -5,7 +5,6 @@ import { Company } from '../Company/company.model';
 import { Vendor } from '../Vendor/vendor.model';
 import { getCompanyIdByName, getVendorIdByName } from '../../utils/getByName'
 import { returnWithMeta } from '../../utils/returnWithMeta'
-import { Query } from 'mongoose'
 
 interface CSVRow {
   title: string;
@@ -498,7 +497,11 @@ const getActiveCreditcardDeals = async (page: number = 1, limit: number = 10) =>
 };
 
 
-const getExpiringCreditcardDealsByVendor = async (vendorName: string, page: number = 1, limit: number = 10) => {
+const getExpiringCreditcardDealsByVendor = async (
+  vendorName: string,
+  page: number = 1,
+  limit: number = 10
+) => {
   const skip = (page - 1) * limit;
   const currentDate = new Date();
 
@@ -527,16 +530,21 @@ const getExpiringCreditcardDealsByVendor = async (vendorName: string, page: numb
     vendorId: vendor._id,
   });
 
+  // Calculate total pages
+  const totalPages = Math.ceil(total / limit);
+
   // Return the deals with meta information
   return {
     meta: {
       total,
       limit,
       page,
+      totalPages,
     },
     data: deals,
   };
 };
+
 
 
 const deleteOldDeals = async (date?: string, days?: string) => {
