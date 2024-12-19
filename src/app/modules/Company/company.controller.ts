@@ -22,7 +22,8 @@ const getAllCompanies: RequestHandler = catchAsync(async (req, res) => {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Companies retrieved successfully.',
-    data: companies,
+    meta: companies.meta, // Include meta information
+    data: companies.data, // Companies data
   });
 });
 
@@ -39,14 +40,14 @@ const getCompanyById: RequestHandler = catchAsync(async (req, res) => {
 
 const getDealsByCompanyName: RequestHandler = catchAsync(async (req, res) => {
   const { companyName } = req.params;
-
-  const deals = await CompanyService.getDealsByCompanyName(companyName);
+  const deals = await CompanyService.getDealsByCompanyName(companyName, req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: `Deals for company '${companyName}' retrieved successfully.`,
-    data: deals,
+    meta: deals.meta, // Include meta information
+    data: deals.data, // Deals data
   });
 });
 
@@ -54,13 +55,14 @@ const getActiveDealsByCompany: RequestHandler = catchAsync(async (req, res) => {
   const { companyName } = req.params;
   const { type } = req.query; // Optional type filter
 
-  const deals = await CompanyService.getActiveDealsByCompany(companyName, type as string);
+  const deals = await CompanyService.getActiveDealsByCompany(companyName, type as string, req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: `Active deals for company '${companyName}'${type ? ` of type '${type}'` : ''} retrieved successfully.`,
-    data: deals,
+    meta: deals.meta, // Include meta information
+    data: deals.data, // Deals data
   });
 });
 
@@ -82,7 +84,7 @@ const deleteCompany: RequestHandler = catchAsync(async (req, res) => {
     statusCode: httpStatus.NO_CONTENT,
     success: true,
     message: 'Company deleted successfully.',
-    data:''
+    data: '',
   });
 });
 

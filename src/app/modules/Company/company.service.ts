@@ -1,6 +1,6 @@
 import { Company } from './company.model';
 import { TCompany } from './company.type';
-import { Deal } from '../Deals/deals.model'
+import { Deal } from '../Deals/deals.model';
 
 const createCompany = async (data: TCompany) => {
   const company = await Company.create(data);
@@ -9,14 +9,22 @@ const createCompany = async (data: TCompany) => {
 
 const getAllCompanies = async (query: any) => {
   const { page = 1, limit = 10 } = query;
-  const skip = (page - 1) * limit;
+  const skip = (page - 1) * Number(limit);
 
   const companies = await Company.find()
     .skip(skip)
     .limit(Number(limit));
   const total = await Company.countDocuments();
 
-  return { companies, total };
+  return {
+    meta: {
+      total,
+      limit: Number(limit),
+      page: Number(page),
+      totalPage: Math.ceil(total / Number(limit)),
+    },
+    data: companies,
+  };
 };
 
 const getCompanyById = async (id: string) => {
@@ -25,25 +33,46 @@ const getCompanyById = async (id: string) => {
   return company;
 };
 
-const getDealsByCompanyName = async (companyName: string) => {
+const getDealsByCompanyName = async (companyName: string, query: any) => {
+  const { page = 1, limit = 10 } = query;
+  const skip = (page - 1) * Number(limit);
+
   // Find the company by name
   const company = await Company.findOne({ name: companyName });
   if (!company) throw new Error('Company not found');
 
   const currentDate = new Date();
 
-  // Fetch all non-expired deals related to this company
+  // Fetch all non-expired deals related to this company with pagination
   const deals = await Deal.find({
     companyId: company._id,
-    expiryDate: { $gte: currentDate }, // Filter only active (non-expired) deals
+    expiryDate: { $gte: currentDate },
   })
-    .populate('vendorId', 'name logo website') // Populate vendor details
-    .populate('companyId', 'name'); // Populate company name for reference
+    .skip(skip)
+    .limit(Number(limit))
+    .populate('vendorId', 'name logo website')
+    .populate('companyId', 'name');
 
-  return deals;
+  const total = await Deal.countDocuments({
+    companyId: company._id,
+    expiryDate: { $gte: currentDate },
+  });
+
+  return {
+    meta: {
+      total,
+      limit: Number(limit),
+      page: Number(page),
+      totalPage: Math.ceil(total / Number(limit)),
+    },
+    data: deals,
+  };
 };
 
-const getActiveDealsByCompany = async (companyName: string, type?: string) => {
+const getActiveDealsByCompany = async (companyName: string, type?: string, query: any = {}) => {
+  const { page = 1, limit = 10 } = query;
+  const skip = (page - 1) * Number(limit);
+
   // Find the company by name
   const company = await Company.findOne({ name: companyName });
   if (!company) throw new Error('Company not found');
@@ -51,24 +80,34 @@ const getActiveDealsByCompany = async (companyName: string, type?: string) => {
   const currentDate = new Date();
 
   // Define the base query
-  const query: any = {
+  const filters: any = {
     companyId: company._id,
     isActive: true,
-    expiryDate: { $gte: currentDate }, // Active, non-expired deals
+    expiryDate: { $gte: currentDate },
   };
 
-  // Add type filter only if provided
   if (type) {
-    query.type = type;
+    filters.type = type;
   }
 
-  // Fetch all active deals for the given company, optionally filtered by type
-  const deals = await Deal.find(query)
-    .sort({ percentage: -1 }) // Sort deals by percentage, best to worst
-    .populate('vendorId', 'name logo website') // Populate vendor details
-    .populate('companyId', 'name'); // Populate company details
+  const deals = await Deal.find(filters)
+    .skip(skip)
+    .limit(Number(limit))
+    .sort({ percentage: -1 })
+    .populate('vendorId', 'name logo website')
+    .populate('companyId', 'name');
 
-  return deals;
+  const total = await Deal.countDocuments(filters);
+
+  return {
+    meta: {
+      total,
+      limit: Number(limit),
+      page: Number(page),
+      totalPage: Math.ceil(total / Number(limit)),
+    },
+    data: deals,
+  };
 };
 
 const updateCompany = async (id: string, data: Partial<TCompany>) => {

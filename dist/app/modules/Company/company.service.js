@@ -18,12 +18,20 @@ const createCompany = (data) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const getAllCompanies = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const { page = 1, limit = 10 } = query;
-    const skip = (page - 1) * limit;
+    const skip = (page - 1) * Number(limit);
     const companies = yield company_model_1.Company.find()
         .skip(skip)
         .limit(Number(limit));
     const total = yield company_model_1.Company.countDocuments();
-    return { companies, total };
+    return {
+        meta: {
+            total,
+            limit: Number(limit),
+            page: Number(page),
+            totalPage: Math.ceil(total / Number(limit)),
+        },
+        data: companies,
+    };
 });
 const getCompanyById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const company = yield company_model_1.Company.findById(id);
@@ -31,43 +39,70 @@ const getCompanyById = (id) => __awaiter(void 0, void 0, void 0, function* () {
         throw new Error('Company not found');
     return company;
 });
-const getDealsByCompanyName = (companyName) => __awaiter(void 0, void 0, void 0, function* () {
+const getDealsByCompanyName = (companyName, query) => __awaiter(void 0, void 0, void 0, function* () {
+    const { page = 1, limit = 10 } = query;
+    const skip = (page - 1) * Number(limit);
     // Find the company by name
     const company = yield company_model_1.Company.findOne({ name: companyName });
     if (!company)
         throw new Error('Company not found');
     const currentDate = new Date();
-    // Fetch all non-expired deals related to this company
+    // Fetch all non-expired deals related to this company with pagination
     const deals = yield deals_model_1.Deal.find({
         companyId: company._id,
-        expiryDate: { $gte: currentDate }, // Filter only active (non-expired) deals
+        expiryDate: { $gte: currentDate },
     })
-        .populate('vendorId', 'name logo website') // Populate vendor details
-        .populate('companyId', 'name'); // Populate company name for reference
-    return deals;
+        .skip(skip)
+        .limit(Number(limit))
+        .populate('vendorId', 'name logo website')
+        .populate('companyId', 'name');
+    const total = yield deals_model_1.Deal.countDocuments({
+        companyId: company._id,
+        expiryDate: { $gte: currentDate },
+    });
+    return {
+        meta: {
+            total,
+            limit: Number(limit),
+            page: Number(page),
+            totalPage: Math.ceil(total / Number(limit)),
+        },
+        data: deals,
+    };
 });
-const getActiveDealsByCompany = (companyName, type) => __awaiter(void 0, void 0, void 0, function* () {
+const getActiveDealsByCompany = (companyName_1, type_1, ...args_1) => __awaiter(void 0, [companyName_1, type_1, ...args_1], void 0, function* (companyName, type, query = {}) {
+    const { page = 1, limit = 10 } = query;
+    const skip = (page - 1) * Number(limit);
     // Find the company by name
     const company = yield company_model_1.Company.findOne({ name: companyName });
     if (!company)
         throw new Error('Company not found');
     const currentDate = new Date();
     // Define the base query
-    const query = {
+    const filters = {
         companyId: company._id,
         isActive: true,
-        expiryDate: { $gte: currentDate }, // Active, non-expired deals
+        expiryDate: { $gte: currentDate },
     };
-    // Add type filter only if provided
     if (type) {
-        query.type = type;
+        filters.type = type;
     }
-    // Fetch all active deals for the given company, optionally filtered by type
-    const deals = yield deals_model_1.Deal.find(query)
-        .sort({ percentage: -1 }) // Sort deals by percentage, best to worst
-        .populate('vendorId', 'name logo website') // Populate vendor details
-        .populate('companyId', 'name'); // Populate company details
-    return deals;
+    const deals = yield deals_model_1.Deal.find(filters)
+        .skip(skip)
+        .limit(Number(limit))
+        .sort({ percentage: -1 })
+        .populate('vendorId', 'name logo website')
+        .populate('companyId', 'name');
+    const total = yield deals_model_1.Deal.countDocuments(filters);
+    return {
+        meta: {
+            total,
+            limit: Number(limit),
+            page: Number(page),
+            totalPage: Math.ceil(total / Number(limit)),
+        },
+        data: deals,
+    };
 });
 const updateCompany = (id, data) => __awaiter(void 0, void 0, void 0, function* () {
     const company = yield company_model_1.Company.findByIdAndUpdate(id, data, { new: true, runValidators: true });

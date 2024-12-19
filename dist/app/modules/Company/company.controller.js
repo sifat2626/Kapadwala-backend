@@ -32,7 +32,8 @@ const getAllCompanies = (0, catchAsync_1.default)((req, res) => __awaiter(void 0
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Companies retrieved successfully.',
-        data: companies,
+        meta: companies.meta, // Include meta information
+        data: companies.data, // Companies data
     });
 }));
 const getCompanyById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -46,23 +47,25 @@ const getCompanyById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
 }));
 const getDealsByCompanyName = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { companyName } = req.params;
-    const deals = yield company_service_1.CompanyService.getDealsByCompanyName(companyName);
+    const deals = yield company_service_1.CompanyService.getDealsByCompanyName(companyName, req.query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
         message: `Deals for company '${companyName}' retrieved successfully.`,
-        data: deals,
+        meta: deals.meta, // Include meta information
+        data: deals.data, // Deals data
     });
 }));
 const getActiveDealsByCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { companyName } = req.params;
     const { type } = req.query; // Optional type filter
-    const deals = yield company_service_1.CompanyService.getActiveDealsByCompany(companyName, type);
+    const deals = yield company_service_1.CompanyService.getActiveDealsByCompany(companyName, type, req.query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
         message: `Active deals for company '${companyName}'${type ? ` of type '${type}'` : ''} retrieved successfully.`,
-        data: deals,
+        meta: deals.meta, // Include meta information
+        data: deals.data, // Deals data
     });
 }));
 const updateCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -80,7 +83,7 @@ const deleteCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
         statusCode: http_status_1.default.NO_CONTENT,
         success: true,
         message: 'Company deleted successfully.',
-        data: ''
+        data: '',
     });
 }));
 exports.CompanyController = {
