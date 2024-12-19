@@ -3,6 +3,9 @@ import { PassThrough } from 'stream';
 import { Deal } from './deals.model';
 import { Company } from '../Company/company.model';
 import { Vendor } from '../Vendor/vendor.model';
+import { getCompanyIdByName, getVendorIdByName } from '../../utils/getByName'
+import { returnWithMeta } from '../../utils/returnWithMeta'
+import { Query } from 'mongoose'
 
 interface CSVRow {
   title: string;
@@ -124,39 +127,52 @@ const getAllDeals = async (query: any): Promise<any> => {
 
   const deals = await Deal.find(filters)
     .skip(skip)
-    .limit(limit)
+    .limit(Number(limit))
     .populate('vendorId', 'name logo website') // Populate vendor details
     .populate('companyId', 'name'); // Populate company name
 
   const total = await Deal.countDocuments(filters);
 
-  return {
-    meta: {
-      total,
-      limit,
-      page,
-    },
-    data: deals,
-  };
+  // Using returnWithMeta utility for consistent response format
+  return returnWithMeta({ total, limit: Number(limit), page: Number(page) }, deals);
 };
 
 
-const getAllActiveDeals = async () => {
+const getAllActiveDeals = async (query: any = {}) => {
   const currentDate = new Date();
 
-  // Fetch all non-expired deals
+  // Set default values for page and limit
+  const page = parseInt(query.page, 10) || 1;
+  const limit = parseInt(query.limit, 10) || 10;
+
+  const skip = (page - 1) * limit;
+
+  // Fetch all non-expired deals with pagination
   const activeDeals = await Deal.find({
     expiryDate: { $gte: currentDate }, // Only non-expired deals
   })
+    .skip(skip)
+    .limit(limit)
     .populate('vendorId', 'name logo website') // Populate vendor details
     .populate('companyId', 'name'); // Populate company details
 
-  return activeDeals;
+  // Count the total number of active deals
+  const total = await Deal.countDocuments({
+    expiryDate: { $gte: currentDate },
+  });
+
+  // Return the response with meta data
+  return returnWithMeta({ total, limit, page }, activeDeals);
 };
 
+
 // Fetch Top Deals
-const getTopDeals = async (): Promise<any[]> => {
+const getTopDeals = async (query: any = {}): Promise<any> => {
   const currentDate = new Date();
+
+  const page = parseInt(query.page, 10) || 1;
+  const limit = parseInt(query.limit, 10) || 10;
+  const skip = (page - 1) * limit;
 
   // Fetch the best non-expired cashback deals
   const cashbackDeals = await Deal.aggregate([
@@ -178,7 +194,6 @@ const getTopDeals = async (): Promise<any[]> => {
     isActive: true,
     expiryDate: { $gte: currentDate }, // Only fetch non-expired deals
   })
-    // .sort({ percentage: -1 })
     .populate('vendorId', 'name logo website'); // Populate vendor details
 
   // Maps for efficient grouping
@@ -203,10 +218,15 @@ const getTopDeals = async (): Promise<any[]> => {
 
   // Fetch all company details for unique companyIds
   const companyIds = [...new Set([...cashbackMap.keys(), ...giftcardMap.keys(), ...creditCardMap.keys()])];
-  const companies = await Company.find({ _id: { $in: companyIds } });
+  const companies = await Company.find({ _id: { $in: companyIds } })
+    .skip(skip)
+    .limit(limit);
+
+  // Total count for pagination meta
+  const total = companyIds.length;
 
   // Combine results
-  return companies.map((company) => {
+  const data = companies.map((company) => {
     const companyId = company._id.toString();
     return {
       company: { id: companyId, name: company.name },
@@ -215,27 +235,20 @@ const getTopDeals = async (): Promise<any[]> => {
       creditCardDeals: creditCardMap.get(companyId) || [],
     };
   });
+
+  // Return with meta
+  return returnWithMeta({ total, limit, page }, data);
 };
 
-// Helper: Get Vendor ID by Name
-const getVendorIdByName = async (name: string): Promise<string | null> => {
-  const vendor = await Vendor.findOne({ name });
-  return vendor ? vendor._id : null;
-};
+const getBestCashbackRateByCompany = async (companyName: string, page?: Query, limit = 10) => {
+  const skip = (page - 1) * limit;
 
-// Helper: Get Company ID by Name
-const getCompanyIdByName = async (name: string): Promise<string | null> => {
-  const company = await Company.findOne({ name });
-  return company ? company._id : null;
-};
-
-const getBestCashbackRateByCompany = async (companyName: string) => {
   // Fetch all cashback deals for the given company (active and expired)
   const deals = await Deal.aggregate([
     {
       $match: {
         type: 'cashback',
-      }
+      },
     },
     {
       $lookup: {
@@ -254,17 +267,59 @@ const getBestCashbackRateByCompany = async (companyName: string) => {
       },
     },
     { $sort: { '_id.date': 1 } }, // Sort by date ascending
+    { $skip: skip }, // Implement pagination (skip)
+    { $limit: limit }, // Implement pagination (limit)
   ]);
 
+  // Count total results for meta information
+  const totalResultsAggregation = await Deal.aggregate([
+    {
+      $match: {
+        type: 'cashback',
+      },
+    },
+    {
+      $lookup: {
+        from: 'companies',
+        localField: 'companyId',
+        foreignField: '_id',
+        as: 'company',
+      },
+    },
+    { $unwind: '$company' },
+    { $match: { 'company.name': companyName } },
+    {
+      $group: {
+        _id: { date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } } },
+        bestCashbackRate: { $max: '$percentage' },
+      },
+    },
+    { $count: 'total' }, // Count the total number of results
+  ]);
+
+  const totalResults = totalResultsAggregation.length > 0 ? totalResultsAggregation[0].total : 0;
+
   // Format the results
-  return deals.map((deal) => ({
+  const formattedDeals = deals.map((deal) => ({
     date: deal._id.date,
     cashbackRate: deal.bestCashbackRate,
   }));
+
+  // Return the deals with meta information
+  return {
+    meta: {
+      total: totalResults,
+      limit,
+      page,
+    },
+    data: formattedDeals,
+  };
 };
 
-const getBestGiftcardRateByCompany = async (companyName: string) => {
-  // Fetch all gift card deals for the given company
+const getBestGiftcardRateByCompany = async (companyName: string, page?: Query, limit = 10) => {
+  const skip = (page - 1) * limit;
+
+  // Fetch gift card deals for the given company with pagination
   const deals = await Deal.aggregate([
     {
       $match: {
@@ -288,71 +343,170 @@ const getBestGiftcardRateByCompany = async (companyName: string) => {
       },
     },
     { $sort: { '_id.date': 1 } }, // Sort by date in ascending order
+    { $skip: skip }, // Implement pagination (skip)
+    { $limit: limit }, // Implement pagination (limit)
   ]);
 
-  // Format the result
-  return deals.map((deal) => ({
+  // Count total results for meta information
+  const totalResultsAggregation = await Deal.aggregate([
+    {
+      $match: {
+        type: 'giftcard', // Filter only gift card deals
+      },
+    },
+    {
+      $lookup: {
+        from: 'companies',
+        localField: 'companyId',
+        foreignField: '_id',
+        as: 'company',
+      },
+    },
+    { $unwind: '$company' },
+    { $match: { 'company.name': companyName } },
+    {
+      $group: {
+        _id: { date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } } },
+        bestGiftcardRate: { $max: '$percentage' },
+      },
+    },
+    { $count: 'total' }, // Count the total number of results
+  ]);
+
+  const totalResults = totalResultsAggregation.length > 0 ? totalResultsAggregation[0].total : 0;
+
+  // Format the results
+  const formattedDeals = deals.map((deal) => ({
     date: deal._id.date,
     giftcardRate: deal.bestGiftcardRate,
   }));
+
+  // Return the deals with meta information
+  return {
+    meta: {
+      total: totalResults,
+      limit,
+      page,
+    },
+    data: formattedDeals,
+  };
 };
 
-const getActiveCashbackDeals = async () => {
+
+const getActiveCashbackDeals = async (page?: Query, limit = 10) => {
+  const skip = (page - 1) * limit;
   const currentDate = new Date();
 
-  // Fetch all active cashback deals, sorted by percentage in descending order
+  // Fetch all active cashback deals with pagination
   const deals = await Deal.find({
     type: 'cashback', // Only cashback deals
     isActive: true, // Only active deals
     expiryDate: { $gte: currentDate }, // Deals that haven't expired
   })
-    // .sort({ percentage: -1 }) // Sort from best to worst
+    .sort({ percentage: -1 }) // Sort from best to worst by percentage
+    .skip(skip) // Apply pagination
+    .limit(limit) // Apply limit
     .populate('vendorId', 'name logo website') // Populate vendor details
     .populate('companyId', 'name'); // Populate company details
 
-  return deals;
+  // Count total active cashback deals for meta information
+  const total = await Deal.countDocuments({
+    type: 'cashback',
+    isActive: true,
+    expiryDate: { $gte: currentDate },
+  });
+
+  // Return the deals with meta information
+  return {
+    meta: {
+      total,
+      limit,
+      page,
+    },
+    data: deals,
+  };
 };
 
-const getActiveGiftcardDeals = async () => {
+
+const getActiveGiftcardDeals = async (page?: Query, limit = 10) => {
+  const skip = (page - 1) * limit;
   const currentDate = new Date();
 
-  // Fetch all active gift card deals, sorted by percentage in descending order
+  // Fetch all active gift card deals with pagination and sorting
   const deals = await Deal.find({
     type: 'giftcard', // Only gift card deals
     isActive: true, // Only active deals
     expiryDate: { $gte: currentDate }, // Deals that haven't expired
   })
-    .sort({ percentage: -1 }) // Sort from best to worst
+    .sort({ percentage: -1 }) // Sort from best to worst by percentage
+    .skip(skip) // Apply pagination
+    .limit(limit) // Apply limit
     .populate('vendorId', 'name logo website') // Populate vendor details
     .populate('companyId', 'name'); // Populate company details
 
-  return deals;
+  // Count total active gift card deals for meta information
+  const total = await Deal.countDocuments({
+    type: 'giftcard',
+    isActive: true,
+    expiryDate: { $gte: currentDate },
+  });
+
+  // Return the deals with meta information
+  return {
+    meta: {
+      total,
+      limit,
+      page,
+    },
+    data: deals,
+  };
 };
 
-const getActiveCreditcardDeals = async () => {
+
+const getActiveCreditcardDeals = async (page?: Query, limit = 10) => {
+  const skip = (page - 1) * limit;
   const currentDate = new Date();
 
-  // Fetch all active credit card deals sorted by percentage in descending order
+  // Fetch all active credit card deals with pagination and sorting
   const deals = await Deal.find({
     type: 'creditcard', // Only credit card deals
     isActive: true, // Only active deals
     expiryDate: { $gte: currentDate }, // Deals that haven't expired
   })
-    .sort({ percentage: -1 }) // Sort by percentage (best to worst)
+    .sort({ percentage: -1 }) // Sort from best to worst by percentage
+    .skip(skip) // Apply pagination
+    .limit(limit) // Apply limit
     .populate('vendorId', 'name logo website') // Populate vendor details
     .populate('companyId', 'name'); // Populate company details
 
-  return deals;
+  // Count total active credit card deals for meta information
+  const total = await Deal.countDocuments({
+    type: 'creditcard',
+    isActive: true,
+    expiryDate: { $gte: currentDate },
+  });
+
+  // Return the deals with meta information
+  return {
+    meta: {
+      total,
+      limit,
+      page,
+    },
+    data: deals,
+  };
 };
 
-const getExpiringCreditcardDealsByVendor = async (vendorName: string) => {
+
+const getExpiringCreditcardDealsByVendor = async (vendorName: string, page?: Query, limit = 10) => {
+  const skip = (page - 1) * limit;
   const currentDate = new Date();
 
   // Find the vendor by name
   const vendor = await Vendor.findOne({ name: vendorName });
   if (!vendor) throw new Error('Vendor not found');
 
-  // Fetch credit card deals for the vendor that are expiring soon
+  // Fetch credit card deals for the vendor that are expiring soon with pagination
   const deals = await Deal.find({
     type: 'creditcard', // Only credit card deals
     isActive: true, // Only active deals
@@ -360,11 +514,30 @@ const getExpiringCreditcardDealsByVendor = async (vendorName: string) => {
     vendorId: vendor._id, // Filter by vendor ID
   })
     .sort({ expiryDate: 1 }) // Sort by expiry date (soonest first)
+    .skip(skip) // Apply pagination
+    .limit(limit) // Apply limit
     .populate('vendorId', 'name logo website') // Populate vendor details
     .populate('companyId', 'name'); // Populate company details
 
-  return deals;
+  // Count total expiring credit card deals for this vendor
+  const total = await Deal.countDocuments({
+    type: 'creditcard',
+    isActive: true,
+    expiryDate: { $gte: currentDate },
+    vendorId: vendor._id,
+  });
+
+  // Return the deals with meta information
+  return {
+    meta: {
+      total,
+      limit,
+      page,
+    },
+    data: deals,
+  };
 };
+
 
 const deleteOldDeals = async (date?: string, days?: string) => {
   let targetDate: Date | null = null;
@@ -388,15 +561,22 @@ const deleteOldDeals = async (date?: string, days?: string) => {
   };
 };
 
-const getAllCreditcardDeals = async (): Promise<any[]> => {
-  // Fetch all cashback deals
-  const deals = await Deal.find({
-    type: 'creditcard', // Filter only cashback deals
-  })
+const getAllCreditcardDeals = async (query: any): Promise<any> => {
+  const { page = 1, limit = 10 } = query;
+
+  const filters = { type: 'creditcard' };
+
+  const skip = (page - 1) * limit;
+
+  const deals = await Deal.find(filters)
+    .skip(skip)
+    .limit(limit)
     .populate('vendorId', 'name logo website') // Populate vendor details
     .populate('companyId', 'name'); // Populate company details
 
-  return deals;
+  const total = await Deal.countDocuments(filters);
+
+  return returnWithMeta({ total, limit: Number(limit), page: Number(page) }, deals);
 };
 
 

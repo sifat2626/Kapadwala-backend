@@ -33,16 +33,26 @@ const uploadDealsFromCSV = (0, catchAsync_1.default)((req, res) => __awaiter(voi
 }));
 // Get all deals
 const getAllDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const deals = yield deal_service_1.DealServices.getAllDeals(req.query);
+    var _a;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const deals = yield deal_service_1.DealServices.getAllDeals(Object.assign(Object.assign({}, req.query), { page, limit }));
+    let filteredDeals = deals;
+    // Limit deals to the first two if the user is not subscribed
+    if (!((_a = req.user) === null || _a === void 0 ? void 0 : _a.isSubscribed)) {
+        filteredDeals = Object.assign(Object.assign({}, deals), { data: deals.data.slice(0, 2) });
+    }
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Deals retrieved successfully.',
-        data: deals,
+        data: filteredDeals,
     });
 }));
 const getAllActiveDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const activeDeals = yield deal_service_1.DealServices.getAllActiveDeals();
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const activeDeals = yield deal_service_1.DealServices.getAllActiveDeals({ page, limit });
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -52,7 +62,9 @@ const getAllActiveDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void
 }));
 // Get top deals
 const getTopDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const topDeals = yield deal_service_1.DealServices.getTopDeals();
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const topDeals = yield deal_service_1.DealServices.getTopDeals({ page, limit });
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -62,26 +74,26 @@ const getTopDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
 }));
 const getBestCashbackRateByCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { companyName } = req.params;
-    const data = yield deal_service_1.DealServices.getBestCashbackRateByCompany(companyName);
+    const cashbackRates = yield deal_service_1.DealServices.getBestCashbackRateByCompany(companyName, req.query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
-        message: `Best cashback rate for '${companyName}' retrieved successfully.`,
-        data,
+        message: `Best cashback rates for '${companyName}' retrieved successfully.`,
+        data: cashbackRates,
     });
 }));
 const getBestGiftcardRateByCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { companyName } = req.params;
-    const data = yield deal_service_1.DealServices.getBestGiftcardRateByCompany(companyName);
+    const giftcardRates = yield deal_service_1.DealServices.getBestGiftcardRateByCompany(companyName, req.query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
-        message: `Best gift card rate for '${companyName}' retrieved successfully.`,
-        data,
+        message: `Best gift card rates for '${companyName}' retrieved successfully.`,
+        data: giftcardRates,
     });
 }));
 const getActiveCashbackDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const deals = yield deal_service_1.DealServices.getActiveCashbackDeals();
+    const deals = yield deal_service_1.DealServices.getActiveCashbackDeals(req.query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -90,7 +102,7 @@ const getActiveCashbackDeals = (0, catchAsync_1.default)((req, res) => __awaiter
     });
 }));
 const getActiveGiftcardDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const deals = yield deal_service_1.DealServices.getActiveGiftcardDeals();
+    const deals = yield deal_service_1.DealServices.getActiveGiftcardDeals(req.query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -99,7 +111,7 @@ const getActiveGiftcardDeals = (0, catchAsync_1.default)((req, res) => __awaiter
     });
 }));
 const getActiveCreditcardDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const deals = yield deal_service_1.DealServices.getActiveCreditcardDeals();
+    const deals = yield deal_service_1.DealServices.getActiveCreditcardDeals(req.query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -109,7 +121,7 @@ const getActiveCreditcardDeals = (0, catchAsync_1.default)((req, res) => __await
 }));
 const getExpiringCreditcardDealsByVendor = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { vendorName } = req.params;
-    const deals = yield deal_service_1.DealServices.getExpiringCreditcardDealsByVendor(vendorName);
+    const deals = yield deal_service_1.DealServices.getExpiringCreditcardDealsByVendor(vendorName, req.query);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -129,11 +141,13 @@ const deleteOldDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
     });
 }));
 const getAllCreditcardDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const deals = yield deal_service_1.DealServices.getAllCreditcardDeals();
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const deals = yield deal_service_1.DealServices.getAllCreditcardDeals({ page, limit });
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
-        message: 'All cashback deals retrieved successfully.',
+        message: 'All credit card deals retrieved successfully.',
         data: deals,
     });
 }));
@@ -149,5 +163,5 @@ exports.DealControllers = {
     getActiveCreditcardDeals,
     getExpiringCreditcardDealsByVendor,
     deleteOldDeals,
-    getAllCreditcardDeals
+    getAllCreditcardDeals,
 };

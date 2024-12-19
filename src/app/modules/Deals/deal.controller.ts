@@ -10,7 +10,6 @@ const uploadDealsFromCSV: RequestHandler = catchAsync(async (req, res) => {
     throw new Error('No file uploaded');
   }
 
-
   // Process the uploaded file
   const result = await DealServices.processCSVData(req.file.buffer); // Assuming processCSVData accepts a Buffer
 
@@ -24,18 +23,32 @@ const uploadDealsFromCSV: RequestHandler = catchAsync(async (req, res) => {
 
 // Get all deals
 const getAllDeals: RequestHandler = catchAsync(async (req, res) => {
-  const deals = await DealServices.getAllDeals(req.query);
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const deals = await DealServices.getAllDeals({ ...req.query, page, limit });
+
+  let filteredDeals = deals;
+
+  // Limit deals to the first two if the user is not subscribed
+  if (!req.user?.isSubscribed) {
+    filteredDeals = {
+      ...deals,
+      data: deals.data.slice(0, 2),
+    };
+  }
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Deals retrieved successfully.',
-    data: deals,
+    data: filteredDeals,
   });
 });
 
 const getAllActiveDeals: RequestHandler = catchAsync(async (req, res) => {
-  const activeDeals = await DealServices.getAllActiveDeals();
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const activeDeals = await DealServices.getAllActiveDeals({ page, limit });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -47,7 +60,9 @@ const getAllActiveDeals: RequestHandler = catchAsync(async (req, res) => {
 
 // Get top deals
 const getTopDeals: RequestHandler = catchAsync(async (req, res) => {
-  const topDeals = await DealServices.getTopDeals();
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const topDeals = await DealServices.getTopDeals({ page, limit });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -59,32 +74,30 @@ const getTopDeals: RequestHandler = catchAsync(async (req, res) => {
 
 const getBestCashbackRateByCompany: RequestHandler = catchAsync(async (req, res) => {
   const { companyName } = req.params;
-
-  const data = await DealServices.getBestCashbackRateByCompany(companyName);
+  const cashbackRates = await DealServices.getBestCashbackRateByCompany(companyName, req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: `Best cashback rate for '${companyName}' retrieved successfully.`,
-    data,
+    message: `Best cashback rates for '${companyName}' retrieved successfully.`,
+    data: cashbackRates,
   });
 });
 
 const getBestGiftcardRateByCompany: RequestHandler = catchAsync(async (req, res) => {
   const { companyName } = req.params;
-
-  const data = await DealServices.getBestGiftcardRateByCompany(companyName);
+  const giftcardRates = await DealServices.getBestGiftcardRateByCompany(companyName, req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: `Best gift card rate for '${companyName}' retrieved successfully.`,
-    data,
+    message: `Best gift card rates for '${companyName}' retrieved successfully.`,
+    data: giftcardRates,
   });
 });
 
 const getActiveCashbackDeals: RequestHandler = catchAsync(async (req, res) => {
-  const deals = await DealServices.getActiveCashbackDeals();
+  const deals = await DealServices.getActiveCashbackDeals(req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -95,7 +108,7 @@ const getActiveCashbackDeals: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const getActiveGiftcardDeals: RequestHandler = catchAsync(async (req, res) => {
-  const deals = await DealServices.getActiveGiftcardDeals();
+  const deals = await DealServices.getActiveGiftcardDeals(req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -106,7 +119,7 @@ const getActiveGiftcardDeals: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const getActiveCreditcardDeals: RequestHandler = catchAsync(async (req, res) => {
-  const deals = await DealServices.getActiveCreditcardDeals();
+  const deals = await DealServices.getActiveCreditcardDeals(req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -118,8 +131,7 @@ const getActiveCreditcardDeals: RequestHandler = catchAsync(async (req, res) => 
 
 const getExpiringCreditcardDealsByVendor: RequestHandler = catchAsync(async (req, res) => {
   const { vendorName } = req.params;
-
-  const deals = await DealServices.getExpiringCreditcardDealsByVendor(vendorName);
+  const deals = await DealServices.getExpiringCreditcardDealsByVendor(vendorName, req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -144,12 +156,14 @@ const deleteOldDeals: RequestHandler = catchAsync(async (req, res) => {
 });
 
 const getAllCreditcardDeals: RequestHandler = catchAsync(async (req, res) => {
-  const deals = await DealServices.getAllCreditcardDeals();
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  const deals = await DealServices.getAllCreditcardDeals({ page, limit });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'All cashback deals retrieved successfully.',
+    message: 'All credit card deals retrieved successfully.',
     data: deals,
   });
 });
@@ -166,5 +180,5 @@ export const DealControllers = {
   getActiveCreditcardDeals,
   getExpiringCreditcardDealsByVendor,
   deleteOldDeals,
-  getAllCreditcardDeals
+  getAllCreditcardDeals,
 };
