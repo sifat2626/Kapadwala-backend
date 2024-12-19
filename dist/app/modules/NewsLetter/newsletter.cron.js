@@ -14,8 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_cron_1 = __importDefault(require("node-cron"));
 const newsletter_service_1 = require("./newsletter.service");
+const config_1 = __importDefault(require("../../config"));
 // Schedule the task to run daily at 8 AM
-node_cron_1.default.schedule('0 8 * * *', () => __awaiter(void 0, void 0, void 0, function* () {
+node_cron_1.default.schedule(`0 ${config_1.default.newslettre_hour} * * *`, () => __awaiter(void 0, void 0, void 0, function* () {
     console.log('Sending daily newsletter...');
     try {
         yield newsletter_service_1.NewsletterService.sendDailyNewsletter();

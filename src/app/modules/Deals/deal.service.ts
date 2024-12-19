@@ -48,9 +48,15 @@ const processCSVData = async (buffer: any): Promise<string> => {
   for (const deal of deals) {
     const { title, percentage, type, vendorName, companyName, expiryDate, link } = deal;
 
-    if (!title || !percentage || !type || !vendorName || !companyName || !expiryDate || !link) {
+    // Validate mandatory fields
+    if (!title || !type || !vendorName || !companyName || !expiryDate || !link) {
       console.error(`Invalid deal entry, skipping: ${JSON.stringify(deal)}`);
       continue;
+    }
+
+    // Optional: Log creditcard deals with missing percentage
+    if (type === 'creditcard' && !percentage) {
+      console.log(`Credit card deal without percentage: ${title}`);
     }
 
     let companyId = companyMap.get(companyName);
@@ -81,7 +87,7 @@ const processCSVData = async (buffer: any): Promise<string> => {
     } else {
       await Deal.create({
         title,
-        percentage,
+        percentage: type === 'creditcard' ? undefined : percentage, // Allow undefined for creditcard
         type,
         vendorId,
         companyId,
@@ -95,8 +101,6 @@ const processCSVData = async (buffer: any): Promise<string> => {
 
   return `Processed ${deals.length} deals.\nDetails: ${JSON.stringify(results)}`;
 };
-
-
 
 
 // Fetch All Deals
@@ -174,7 +178,7 @@ const getTopDeals = async (): Promise<any[]> => {
     isActive: true,
     expiryDate: { $gte: currentDate }, // Only fetch non-expired deals
   })
-    .sort({ percentage: -1 })
+    // .sort({ percentage: -1 })
     .populate('vendorId', 'name logo website'); // Populate vendor details
 
   // Maps for efficient grouping
@@ -192,7 +196,7 @@ const getTopDeals = async (): Promise<any[]> => {
     if (!creditCardMap.has(companyId)) creditCardMap.set(companyId, []);
     creditCardMap.get(companyId)!.push({
       vendor: deal.vendorId, // Populated vendor details
-      percentage: deal.percentage,
+      title: deal.title,
       link: deal.link,
     });
   });
@@ -302,7 +306,7 @@ const getActiveCashbackDeals = async () => {
     isActive: true, // Only active deals
     expiryDate: { $gte: currentDate }, // Deals that haven't expired
   })
-    .sort({ percentage: -1 }) // Sort from best to worst
+    // .sort({ percentage: -1 }) // Sort from best to worst
     .populate('vendorId', 'name logo website') // Populate vendor details
     .populate('companyId', 'name'); // Populate company details
 
@@ -384,6 +388,18 @@ const deleteOldDeals = async (date?: string, days?: string) => {
   };
 };
 
+const getAllCreditcardDeals = async (): Promise<any[]> => {
+  // Fetch all cashback deals
+  const deals = await Deal.find({
+    type: 'creditcard', // Filter only cashback deals
+  })
+    .populate('vendorId', 'name logo website') // Populate vendor details
+    .populate('companyId', 'name'); // Populate company details
+
+  return deals;
+};
+
+
 
 export const DealServices = {
   getAllDeals,
@@ -396,5 +412,6 @@ export const DealServices = {
   getExpiringCreditcardDealsByVendor,
   getTopDeals,
   processCSVData,
-  deleteOldDeals
+  deleteOldDeals,
+  getAllCreditcardDeals
 };

@@ -5,7 +5,7 @@ const zod_1 = require("zod");
 exports.dealValidationSchema = zod_1.z.object({
     body: zod_1.z.object({
         title: zod_1.z.string({ required_error: 'Title is required' }),
-        percentage: zod_1.z.number({ required_error: 'Percentage is required' }).min(0),
+        percentage: zod_1.z.number({ required_error: 'Percentage is required' }).min(0).optional(),
         type: zod_1.z.enum(['cashback', 'giftcard', 'creditcard'], {
             required_error: 'Type is required',
         }),

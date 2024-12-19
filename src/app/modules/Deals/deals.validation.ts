@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const dealValidationSchema = z.object({
   body: z.object({
     title: z.string({ required_error: 'Title is required' }),
-    percentage: z.number({ required_error: 'Percentage is required' }).min(0),
+    percentage: z.number({ required_error: 'Percentage is required' }).min(0).optional(),
     type: z.enum(['cashback', 'giftcard', 'creditcard'], {
       required_error: 'Type is required',
     }),

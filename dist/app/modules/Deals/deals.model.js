@@ -10,8 +10,10 @@ const dealSchema = new mongoose_1.Schema({
     },
     percentage: {
         type: Number,
-        required: [true, 'Percentage value is required'],
         min: [0, 'Percentage cannot be less than 0'],
+        required: function () {
+            return this.type !== 'creditcard';
+        },
     },
     type: {
         type: String,

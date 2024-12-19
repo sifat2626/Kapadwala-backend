@@ -6,7 +6,7 @@ export type TDealType = 'cashback' | 'giftcard' | 'creditcard';
 export type TDeal = {
   _id: string;
   title: string;
-  percentage: number;
+  percentage?: number;
   type: TDealType;
   vendorId: Schema.Types.ObjectId
   companyId: Schema.Types.ObjectId

@@ -29,6 +29,8 @@ router.get('/cashback/active',protect(), DealControllers.getActiveCashbackDeals)
 
 router.get('/creditcard/active',protect(), DealControllers.getActiveCreditcardDeals);
 
+router.get('/creditcard/all',protect(), DealControllers.getAllCreditcardDeals);
+
 // Get all deals
 router.get(
   '/',

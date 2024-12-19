@@ -128,6 +128,15 @@ const deleteOldDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
         data: result.deletedCount,
     });
 }));
+const getAllCreditcardDeals = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const deals = yield deal_service_1.DealServices.getAllCreditcardDeals();
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'All cashback deals retrieved successfully.',
+        data: deals,
+    });
+}));
 exports.DealControllers = {
     uploadDealsFromCSV,
     getAllActiveDeals,
@@ -139,5 +148,6 @@ exports.DealControllers = {
     getActiveCashbackDeals,
     getActiveCreditcardDeals,
     getExpiringCreditcardDealsByVendor,
-    deleteOldDeals
+    deleteOldDeals,
+    getAllCreditcardDeals
 };

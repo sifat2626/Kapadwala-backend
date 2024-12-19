@@ -22,6 +22,7 @@ router.get('/creditcard/expiring-soon/:vendorName', (0, protect_1.default)(), de
 router.get('/giftcard/active', (0, protect_1.default)(), deal_controller_1.DealControllers.getActiveGiftcardDeals);
 router.get('/cashback/active', (0, protect_1.default)(), deal_controller_1.DealControllers.getActiveCashbackDeals);
 router.get('/creditcard/active', (0, protect_1.default)(), deal_controller_1.DealControllers.getActiveCreditcardDeals);
+router.get('/creditcard/all', (0, protect_1.default)(), deal_controller_1.DealControllers.getAllCreditcardDeals);
 // Get all deals
 router.get('/', (0, protect_1.default)(), deal_controller_1.DealControllers.getAllDeals);
 // Get top deals

@@ -10,8 +10,10 @@ const dealSchema = new Schema<TDeal, DealModel>(
     },
     percentage: {
       type: Number,
-      required: [true, 'Percentage value is required'],
       min: [0, 'Percentage cannot be less than 0'],
+      required: function (this: any) {
+        return this.type !== 'creditcard';
+      },
     },
     type: {
       type: String,

@@ -44,9 +44,14 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
     existingVendors.forEach((vendor) => vendorMap.set(vendor.name, vendor._id));
     for (const deal of deals) {
         const { title, percentage, type, vendorName, companyName, expiryDate, link } = deal;
-        if (!title || !percentage || !type || !vendorName || !companyName || !expiryDate || !link) {
+        // Validate mandatory fields
+        if (!title || !type || !vendorName || !companyName || !expiryDate || !link) {
             console.error(`Invalid deal entry, skipping: ${JSON.stringify(deal)}`);
             continue;
+        }
+        // Optional: Log creditcard deals with missing percentage
+        if (type === 'creditcard' && !percentage) {
+            console.log(`Credit card deal without percentage: ${title}`);
         }
         let companyId = companyMap.get(companyName);
         if (!companyId) {
@@ -74,7 +79,7 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
         else {
             yield deals_model_1.Deal.create({
                 title,
-                percentage,
+                percentage: type === 'creditcard' ? undefined : percentage, // Allow undefined for creditcard
                 type,
                 vendorId,
                 companyId,
@@ -150,7 +155,7 @@ const getTopDeals = () => __awaiter(void 0, void 0, void 0, function* () {
         isActive: true,
         expiryDate: { $gte: currentDate }, // Only fetch non-expired deals
     })
-        .sort({ percentage: -1 })
+        // .sort({ percentage: -1 })
         .populate('vendorId', 'name logo website'); // Populate vendor details
     // Maps for efficient grouping
     const cashbackMap = new Map();
@@ -166,7 +171,7 @@ const getTopDeals = () => __awaiter(void 0, void 0, void 0, function* () {
             creditCardMap.set(companyId, []);
         creditCardMap.get(companyId).push({
             vendor: deal.vendorId, // Populated vendor details
-            percentage: deal.percentage,
+            title: deal.title,
             link: deal.link,
         });
     });
@@ -266,7 +271,7 @@ const getActiveCashbackDeals = () => __awaiter(void 0, void 0, void 0, function*
         isActive: true, // Only active deals
         expiryDate: { $gte: currentDate }, // Deals that haven't expired
     })
-        .sort({ percentage: -1 }) // Sort from best to worst
+        // .sort({ percentage: -1 }) // Sort from best to worst
         .populate('vendorId', 'name logo website') // Populate vendor details
         .populate('companyId', 'name'); // Populate company details
     return deals;
@@ -338,6 +343,15 @@ const deleteOldDeals = (date, days) => __awaiter(void 0, void 0, void 0, functio
         deletedCount: result.deletedCount || 0,
     };
 });
+const getAllCreditcardDeals = () => __awaiter(void 0, void 0, void 0, function* () {
+    // Fetch all cashback deals
+    const deals = yield deals_model_1.Deal.find({
+        type: 'creditcard', // Filter only cashback deals
+    })
+        .populate('vendorId', 'name logo website') // Populate vendor details
+        .populate('companyId', 'name'); // Populate company details
+    return deals;
+});
 exports.DealServices = {
     getAllDeals,
     getAllActiveDeals,
@@ -349,5 +363,6 @@ exports.DealServices = {
     getExpiringCreditcardDealsByVendor,
     getTopDeals,
     processCSVData,
-    deleteOldDeals
+    deleteOldDeals,
+    getAllCreditcardDeals
 };
