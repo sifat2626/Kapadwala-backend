@@ -12,6 +12,13 @@ export interface TUser {
   isSubscribed: boolean;
   subscriptionDate: Date | null;
   favorites: Types.ObjectId[]; // Array of references to Company IDs
+  lastPayment?: {
+    amount: number; // Payment amount
+    currency: string; // Payment currency (e.g., 'usd')
+    status: 'pending' | 'completed' | 'failed'; // Payment status
+    transactionId: string | null; // Unique transaction ID
+    paymentDate: Date | null; // Date of the last successful payment
+  };
 }
 
 // Mongoose Model extension for custom static methods

@@ -53,8 +53,30 @@ const userSchema = new mongoose_1.Schema({
             ref: 'Company', // References the Company model
         },
     ],
+    lastPayment: {
+        amount: {
+            type: Number, // Store payment amount
+        },
+        currency: {
+            type: String,
+            default: 'usd', // Default to USD
+        },
+        status: {
+            type: String,
+            enum: ['pending', 'completed', 'failed'],
+            default: null, // Status of the last payment
+        },
+        transactionId: {
+            type: String, // Unique ID for Stripe or other payment gateway
+            default: null,
+        },
+        paymentDate: {
+            type: Date, // Date of the last successful payment
+            default: null,
+        },
+    },
 }, {
-    timestamps: true,
+    timestamps: true, // Adds createdAt and updatedAt fields
 });
 // Middleware to hash password
 userSchema.pre('save', function (next) {
@@ -73,7 +95,7 @@ userSchema.post('save', function (doc, next) {
 // Static methods
 userSchema.statics.isUserExistsByEmail = function (email) {
     return __awaiter(this, void 0, void 0, function* () {
-        return yield exports.User.findOne({ email }).select('+password');
+        return exports.User.findOne({ email }).select('+password');
     });
 };
 userSchema.statics.isPasswordMatched = function (plainTextPassword, hashedPassword) {

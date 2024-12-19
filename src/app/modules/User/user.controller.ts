@@ -150,6 +150,8 @@ const getAllFavoriteCompanies: RequestHandler = catchAsync(async (req, res) => {
 });
 
 
+
+
 export const UserControllers = {
   createUser,
   getAllUsers,

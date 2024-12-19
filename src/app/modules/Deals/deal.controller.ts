@@ -129,6 +129,20 @@ const getExpiringCreditcardDealsByVendor: RequestHandler = catchAsync(async (req
   });
 });
 
+// Delete old deals by exact date or days
+const deleteOldDeals: RequestHandler = catchAsync(async (req, res) => {
+  const { date, days } = req.query;
+
+  const result = await DealServices.deleteOldDeals(date as string, days as string);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: result.message,
+    data: result.deletedCount,
+  });
+});
+
 export const DealControllers = {
   uploadDealsFromCSV,
   getAllActiveDeals,
@@ -139,5 +153,6 @@ export const DealControllers = {
   getActiveGiftcardDeals,
   getActiveCashbackDeals,
   getActiveCreditcardDeals,
-  getExpiringCreditcardDealsByVendor
+  getExpiringCreditcardDealsByVendor,
+  deleteOldDeals
 };

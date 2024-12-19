@@ -5,8 +5,13 @@ import express, { Application, Request, Response } from 'express'
 import globalErrorHandler from './app/middlewares/globalErrorhandler'
 import notFound from './app/middlewares/notFound'
 import router from './app/routes'
+import { PaymentController } from './app/modules/Payment/payment.controller'
+import './app/modules/NewsLetter/newsletter.cron';
 
 const app: Application = express()
+
+// Route to handle Stripe webhook
+app.post(`/api/v1/payments/webhook`,express.raw({ type: 'application/json' }), PaymentController.stripeWebhook);
 
 //parsers
 app.use(express.json())

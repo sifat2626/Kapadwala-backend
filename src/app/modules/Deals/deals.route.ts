@@ -43,4 +43,11 @@ router.get(
   DealControllers.getTopDeals,
 );
 
+// Delete Old Deals
+router.delete(
+  '/delete-old-deals',
+  auth(USER_ROLE.admin, USER_ROLE.superAdmin), // Only admins or super admins can delete old deals
+  DealControllers.deleteOldDeals,
+);
+
 export const DealRoutes = router;

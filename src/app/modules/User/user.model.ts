@@ -41,9 +41,31 @@ const userSchema = new Schema<TUser, UserModel>(
         ref: 'Company', // References the Company model
       },
     ],
+    lastPayment: {
+      amount: {
+        type: Number, // Store payment amount
+      },
+      currency: {
+        type: String,
+        default: 'usd', // Default to USD
+      },
+      status: {
+        type: String,
+        enum: ['pending', 'completed', 'failed'],
+        default: null, // Status of the last payment
+      },
+      transactionId: {
+        type: String, // Unique ID for Stripe or other payment gateway
+        default: null,
+      },
+      paymentDate: {
+        type: Date, // Date of the last successful payment
+        default: null,
+      },
+    },
   },
   {
-    timestamps: true,
+    timestamps: true, // Adds createdAt and updatedAt fields
   },
 );
 
@@ -66,7 +88,7 @@ userSchema.post('save', function (doc, next) {
 
 // Static methods
 userSchema.statics.isUserExistsByEmail = async function (email: string) {
-  return await User.findOne({ email }).select('+password');
+  return User.findOne({ email }).select('+password');
 };
 
 userSchema.statics.isPasswordMatched = async function (

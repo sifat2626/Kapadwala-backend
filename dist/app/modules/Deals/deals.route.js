@@ -26,4 +26,7 @@ router.get('/creditcard/active', (0, protect_1.default)(), deal_controller_1.Dea
 router.get('/', (0, protect_1.default)(), deal_controller_1.DealControllers.getAllDeals);
 // Get top deals
 router.get('/top', (0, protect_1.default)(), deal_controller_1.DealControllers.getTopDeals);
+// Delete Old Deals
+router.delete('/delete-old-deals', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), // Only admins or super admins can delete old deals
+deal_controller_1.DealControllers.deleteOldDeals);
 exports.DealRoutes = router;

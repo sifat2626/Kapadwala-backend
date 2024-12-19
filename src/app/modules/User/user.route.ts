@@ -46,4 +46,6 @@ router.delete('/:companyId/favorites',protect(), UserControllers.removeFavoriteC
 
 router.get('/favorites', protect(), UserControllers.getAllFavoriteCompanies);
 
+router.get('/me', protect(), UserControllers.getMe);
+
 export const UserRoutes = router;

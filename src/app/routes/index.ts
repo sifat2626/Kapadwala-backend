@@ -5,6 +5,9 @@ import { UserRoutes } from '../modules/User/user.route'
 import { DealRoutes } from '../modules/Deals/deals.route'
 import { VendorRoutes } from '../modules/Vendor/vendor.route'
 import { CompanyRoutes } from '../modules/Company/company.route'
+import { PaymentRoutes } from '../modules/Payment/payment.route'
+import { EmailRoutes } from '../modules/Email/email.route'
+import { NewsletterRoutes } from '../modules/NewsLetter/newsletter.route'
 
 const router = Router()
 
@@ -28,6 +31,18 @@ const moduleRoutes = [
   {
     path: '/companies',
     route: CompanyRoutes,
+  },
+  {
+    path: '/payments',
+    route: PaymentRoutes,
+  },
+  {
+    path: '/mails',
+    route: EmailRoutes,
+  },
+  {
+    path: '/newsletter',
+    route: NewsletterRoutes,
   },
 
 ]

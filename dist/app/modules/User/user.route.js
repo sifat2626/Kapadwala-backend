@@ -27,4 +27,5 @@ router.post('/:companyId/favorites', (0, protect_1.default)(), user_controller_1
 // Route to remove a favorite company
 router.delete('/:companyId/favorites', (0, protect_1.default)(), user_controller_1.UserControllers.removeFavoriteCompany);
 router.get('/favorites', (0, protect_1.default)(), user_controller_1.UserControllers.getAllFavoriteCompanies);
+router.get('/me', (0, protect_1.default)(), user_controller_1.UserControllers.getMe);
 exports.UserRoutes = router;

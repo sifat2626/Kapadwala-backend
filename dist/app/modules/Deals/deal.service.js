@@ -315,6 +315,29 @@ const getExpiringCreditcardDealsByVendor = (vendorName) => __awaiter(void 0, voi
         .populate('companyId', 'name'); // Populate company details
     return deals;
 });
+const deleteOldDeals = (date, days) => __awaiter(void 0, void 0, void 0, function* () {
+    let targetDate = null;
+    if (date) {
+        targetDate = new Date(date);
+        if (isNaN(targetDate.getTime()))
+            throw new Error('Invalid date format.');
+    }
+    else if (days) {
+        const daysInt = parseInt(days, 10);
+        if (isNaN(daysInt) || daysInt <= 0)
+            throw new Error('Invalid number of days.');
+        targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() - daysInt);
+    }
+    else {
+        throw new Error('Please provide either a date or days.');
+    }
+    const result = yield deals_model_1.Deal.deleteMany({ createdAt: { $lt: targetDate } });
+    return {
+        message: `Deals older than ${targetDate.toISOString()} have been deleted.`,
+        deletedCount: result.deletedCount || 0,
+    };
+});
 exports.DealServices = {
     getAllDeals,
     getAllActiveDeals,
@@ -326,4 +349,5 @@ exports.DealServices = {
     getExpiringCreditcardDealsByVendor,
     getTopDeals,
     processCSVData,
+    deleteOldDeals
 };

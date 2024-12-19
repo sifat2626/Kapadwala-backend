@@ -6,6 +6,9 @@ const user_route_1 = require("../modules/User/user.route");
 const deals_route_1 = require("../modules/Deals/deals.route");
 const vendor_route_1 = require("../modules/Vendor/vendor.route");
 const company_route_1 = require("../modules/Company/company.route");
+const payment_route_1 = require("../modules/Payment/payment.route");
+const email_route_1 = require("../modules/Email/email.route");
+const newsletter_route_1 = require("../modules/NewsLetter/newsletter.route");
 const router = (0, express_1.Router)();
 const moduleRoutes = [
     {
@@ -27,6 +30,18 @@ const moduleRoutes = [
     {
         path: '/companies',
         route: company_route_1.CompanyRoutes,
+    },
+    {
+        path: '/payments',
+        route: payment_route_1.PaymentRoutes,
+    },
+    {
+        path: '/mails',
+        route: email_route_1.EmailRoutes,
+    },
+    {
+        path: '/newsletter',
+        route: newsletter_route_1.NewsletterRoutes,
     },
 ];
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

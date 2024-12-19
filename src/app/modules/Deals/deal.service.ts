@@ -362,6 +362,29 @@ const getExpiringCreditcardDealsByVendor = async (vendorName: string) => {
   return deals;
 };
 
+const deleteOldDeals = async (date?: string, days?: string) => {
+  let targetDate: Date | null = null;
+
+  if (date) {
+    targetDate = new Date(date);
+    if (isNaN(targetDate.getTime())) throw new Error('Invalid date format.');
+  } else if (days) {
+    const daysInt = parseInt(days, 10);
+    if (isNaN(daysInt) || daysInt <= 0) throw new Error('Invalid number of days.');
+    targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() - daysInt);
+  } else {
+    throw new Error('Please provide either a date or days.');
+  }
+
+  const result = await Deal.deleteMany({ createdAt: { $lt: targetDate } });
+  return {
+    message: `Deals older than ${targetDate.toISOString()} have been deleted.`,
+    deletedCount: result.deletedCount || 0,
+  };
+};
+
+
 export const DealServices = {
   getAllDeals,
   getAllActiveDeals,
@@ -373,4 +396,5 @@ export const DealServices = {
   getExpiringCreditcardDealsByVendor,
   getTopDeals,
   processCSVData,
+  deleteOldDeals
 };
