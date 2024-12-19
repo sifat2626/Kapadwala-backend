@@ -19,6 +19,11 @@ export interface TUser {
     transactionId: string | null; // Unique transaction ID
     paymentDate: Date | null; // Date of the last successful payment
   };
+  otp?: string; // Hashed OTP for password reset
+  otpExpires?: Date; // Expiry time for OTP
+
+  // Instance method for generating OTP
+  generateOtp(): string;
 }
 
 // Mongoose Model extension for custom static methods

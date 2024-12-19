@@ -46,7 +46,31 @@ const refreshToken = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
         data: result,
     });
 }));
+// Request OTP for password reset
+const requestOtp = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    yield auth_service_1.AuthServices.requestOtp(email);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'OTP sent successfully.',
+        data: ''
+    });
+}));
+// Reset password using OTP
+const resetPasswordWithOtp = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, otp, password } = req.body;
+    yield auth_service_1.AuthServices.validateOtpAndResetPassword(email, otp, password);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Password reset successfully.',
+        data: ''
+    });
+}));
 exports.AuthControllers = {
     loginUser,
     refreshToken,
+    requestOtp,
+    resetPasswordWithOtp
 };

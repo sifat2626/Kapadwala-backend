@@ -1,5 +1,6 @@
 import { Schema, model, Types } from 'mongoose';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import config from '../../config';
 import { TUser, UserModel } from './user.interface';
 
@@ -19,7 +20,7 @@ const userSchema = new Schema<TUser, UserModel>(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      select: false,
+      select: false, // Exclude by default
     },
     role: {
       type: String,
@@ -63,6 +64,13 @@ const userSchema = new Schema<TUser, UserModel>(
         default: null,
       },
     },
+    otp: {
+      type: String, // Store the OTP securely (e.g., hashed)
+      select: false,
+    },
+    otpExpires: {
+      type: Date,
+    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields
@@ -96,6 +104,14 @@ userSchema.statics.isPasswordMatched = async function (
   hashedPassword: string,
 ) {
   return await bcrypt.compare(plainTextPassword, hashedPassword);
+};
+
+// Instance method to generate an OTP
+userSchema.methods.generateOtp = function () {
+  const otp = crypto.randomInt(100000, 999999).toString(); // Generate a 6-digit OTP
+  this.otp = crypto.createHash('sha256').update(otp).digest('hex'); // Hash the OTP for security
+  this.otpExpires = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
+  return otp; // Return the plain OTP for sending
 };
 
 export const User = model<TUser, UserModel>('User', userSchema);

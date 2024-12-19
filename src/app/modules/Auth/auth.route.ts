@@ -17,4 +17,10 @@ router.post(
   AuthControllers.refreshToken,
 )
 
+// Request OTP
+router.post('/request-otp', AuthControllers.requestOtp);
+
+// Reset password using OTP
+router.post('/reset-password-with-otp', AuthControllers.resetPasswordWithOtp);
+
 export const AuthRoutes = router

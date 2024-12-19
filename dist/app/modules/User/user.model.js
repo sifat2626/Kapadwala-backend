@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = void 0;
 const mongoose_1 = require("mongoose");
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const crypto_1 = __importDefault(require("crypto"));
 const config_1 = __importDefault(require("../../config"));
 const userSchema = new mongoose_1.Schema({
     name: {
@@ -31,7 +32,7 @@ const userSchema = new mongoose_1.Schema({
     password: {
         type: String,
         required: [true, 'Password is required'],
-        select: false,
+        select: false, // Exclude by default
     },
     role: {
         type: String,
@@ -75,6 +76,13 @@ const userSchema = new mongoose_1.Schema({
             default: null,
         },
     },
+    otp: {
+        type: String, // Store the OTP securely (e.g., hashed)
+        select: false,
+    },
+    otpExpires: {
+        type: Date,
+    },
 }, {
     timestamps: true, // Adds createdAt and updatedAt fields
 });
@@ -102,5 +110,12 @@ userSchema.statics.isPasswordMatched = function (plainTextPassword, hashedPasswo
     return __awaiter(this, void 0, void 0, function* () {
         return yield bcrypt_1.default.compare(plainTextPassword, hashedPassword);
     });
+};
+// Instance method to generate an OTP
+userSchema.methods.generateOtp = function () {
+    const otp = crypto_1.default.randomInt(100000, 999999).toString(); // Generate a 6-digit OTP
+    this.otp = crypto_1.default.createHash('sha256').update(otp).digest('hex'); // Hash the OTP for security
+    this.otpExpires = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
+    return otp; // Return the plain OTP for sending
 };
 exports.User = (0, mongoose_1.model)('User', userSchema);

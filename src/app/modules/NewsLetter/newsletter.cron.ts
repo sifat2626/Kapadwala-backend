@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import { NewsletterService } from './newsletter.service';
 
 // Schedule the task to run daily at 8 AM
-cron.schedule('*/10 * * * *', async () => {
+cron.schedule('0 8 * * *', async () => {
   console.log('Sending daily newsletter...');
   try {
     await NewsletterService.sendDailyNewsletter();

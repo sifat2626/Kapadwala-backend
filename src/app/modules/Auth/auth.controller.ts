@@ -37,7 +37,35 @@ const refreshToken = catchAsync(async (req, res) => {
   })
 })
 
+// Request OTP for password reset
+const requestOtp = catchAsync(async (req, res) => {
+  const { email } = req.body;
+  await AuthServices.requestOtp(email);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'OTP sent successfully.',
+    data:''
+  });
+});
+
+// Reset password using OTP
+const resetPasswordWithOtp = catchAsync(async (req, res) => {
+  const { email, otp, password } = req.body;
+  await AuthServices.validateOtpAndResetPassword(email, otp, password);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Password reset successfully.',
+    data:''
+  });
+});
+
 export const AuthControllers = {
   loginUser,
   refreshToken,
+  requestOtp,
+  resetPasswordWithOtp
 }
