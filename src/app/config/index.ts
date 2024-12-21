@@ -26,6 +26,7 @@ export default {
   email_user: process.env.EMAIL_USER || '',
   email_password: process.env.EMAIL_PASSWORD || '',
   newslettre_hour: process.env.NEWSLETRE_HOUR || '8',
+  client_url: process.env.CLIENT_URL,
   reset_pass_ui_link: process.env.RESET_PASS_UI_LINK,
   reset_pass_ui_link_dev: process.env.RESET_PASS_UI_LINK_DEV,
 }
