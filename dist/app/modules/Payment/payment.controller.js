@@ -20,25 +20,73 @@ const http_status_1 = __importDefault(require("http-status"));
 const config_1 = __importDefault(require("../../config"));
 const payment_service_1 = require("./payment.service");
 // Create a Stripe payment session
-const createPaymentSession = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    const { amount, currency } = req.body;
-    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
-    if (!userId) {
-        return (0, sendResponse_1.default)(res, {
-            statusCode: http_status_1.default.UNAUTHORIZED,
+const createPayment = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Initialize Stripe
+        const stripe = new stripe_1.default(config_1.default.stripe_secret_key, { apiVersion: '2024-11-20.acacia' });
+        // Extract currency and amount from the request body
+        const { currency, amount } = req.body;
+        // Validate input
+        if (!currency || typeof currency !== 'string') {
+            return (0, sendResponse_1.default)(res, {
+                statusCode: http_status_1.default.BAD_REQUEST,
+                success: false,
+                message: 'Invalid or missing currency. Please provide a valid currency.',
+                data: null,
+            });
+        }
+        if (!amount || typeof amount !== 'number' || amount <= 0) {
+            return (0, sendResponse_1.default)(res, {
+                statusCode: http_status_1.default.BAD_REQUEST,
+                success: false,
+                message: 'Invalid or missing amount. Please provide a valid positive amount.',
+                data: null,
+            });
+        }
+        // Create a Stripe payment session
+        const session = yield stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price_data: {
+                        currency,
+                        product_data: { name: 'Product Name' },
+                        unit_amount: amount,
+                    },
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            success_url: `${config_1.default.client_url}/success`,
+            cancel_url: `${config_1.default.client_url}/cancel`,
+        });
+        // Return success response
+        (0, sendResponse_1.default)(res, {
+            statusCode: http_status_1.default.OK,
+            success: true,
+            message: 'Payment session created successfully.',
+            data: session,
+        });
+    }
+    catch (error) {
+        console.error('Error creating payment session:', error);
+        // Check for specific Stripe errors
+        if (error instanceof stripe_1.default.errors.StripeError) {
+            return (0, sendResponse_1.default)(res, {
+                statusCode: http_status_1.default.BAD_REQUEST,
+                success: false,
+                message: error.message || 'An error occurred while creating the payment session with Stripe.',
+                data: null,
+            });
+        }
+        // Generic error response
+        (0, sendResponse_1.default)(res, {
+            statusCode: http_status_1.default.INTERNAL_SERVER_ERROR,
             success: false,
-            message: 'You must be logged in to create a payment session.',
+            message: 'An internal server error occurred while creating the payment session.',
             data: null,
         });
     }
-    const session = yield payment_service_1.PaymentService.createPaymentSession(userId, amount, currency);
-    (0, sendResponse_1.default)(res, {
-        statusCode: http_status_1.default.OK,
-        success: true,
-        message: 'Payment session created successfully.',
-        data: session,
-    });
 }));
 // Handle Stripe webhook
 const stripeWebhook = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -70,15 +118,26 @@ const stripeWebhook = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
             data: null,
         });
     }
-    yield payment_service_1.PaymentService.handleStripeWebhook(event);
-    (0, sendResponse_1.default)(res, {
-        statusCode: http_status_1.default.OK,
-        success: true,
-        message: 'Webhook processed successfully.',
-        data: { received: true },
-    });
+    try {
+        yield payment_service_1.PaymentService.handleStripeWebhook(event);
+        (0, sendResponse_1.default)(res, {
+            statusCode: http_status_1.default.OK,
+            success: true,
+            message: 'Webhook processed successfully.',
+            data: { received: true },
+        });
+    }
+    catch (error) {
+        console.error('Error processing Stripe webhook:', error);
+        (0, sendResponse_1.default)(res, {
+            statusCode: http_status_1.default.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: 'An error occurred while processing the webhook.',
+            data: null,
+        });
+    }
 }));
 exports.PaymentController = {
-    createPaymentSession,
+    createPayment,
     stripeWebhook,
 };
