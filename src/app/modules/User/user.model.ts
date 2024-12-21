@@ -20,7 +20,7 @@ const userSchema = new Schema<TUser, UserModel>(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      select: false, // Exclude by default
+      select: false, // Exclude by default for security
     },
     role: {
       type: String,
@@ -64,6 +64,14 @@ const userSchema = new Schema<TUser, UserModel>(
         default: null,
       },
     },
+    stripeCustomerId: {
+      type: String,
+      default: null, // Stores Stripe Customer ID
+    },
+    stripeSubscriptionId: {
+      type: String,
+      default: null, // Stores Stripe Subscription ID
+    },
     otp: {
       type: String, // Store the OTP securely (e.g., hashed)
       select: false,
@@ -77,7 +85,7 @@ const userSchema = new Schema<TUser, UserModel>(
   },
 );
 
-// Middleware to hash password
+// Middleware to hash password before saving
 userSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
     this.password = await bcrypt.hash(
@@ -88,17 +96,18 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Remove password after save
+// Middleware to remove password from the saved document
 userSchema.post('save', function (doc, next) {
   doc.password = '';
   next();
 });
 
-// Static methods
+// Static method to check if a user exists by email
 userSchema.statics.isUserExistsByEmail = async function (email: string) {
   return User.findOne({ email }).select('+password');
 };
 
+// Static method to verify if the password matches
 userSchema.statics.isPasswordMatched = async function (
   plainTextPassword: string,
   hashedPassword: string,
@@ -106,7 +115,7 @@ userSchema.statics.isPasswordMatched = async function (
   return await bcrypt.compare(plainTextPassword, hashedPassword);
 };
 
-// Instance method to generate an OTP
+// Instance method to generate and hash an OTP
 userSchema.methods.generateOtp = function () {
   const otp = crypto.randomInt(100000, 999999).toString(); // Generate a 6-digit OTP
   this.otp = crypto.createHash('sha256').update(otp).digest('hex'); // Hash the OTP for security

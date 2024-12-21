@@ -1,5 +1,4 @@
 import Stripe from 'stripe';
-import config from '../../config';
 import { User } from '../User/user.model';
 
 // Initialize Stripe
@@ -10,47 +9,44 @@ import { User } from '../User/user.model';
 // Handle webhook events from Stripe
 const handleStripeWebhook = async (event: Stripe.Event) => {
   try {
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.metadata?.userId;
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
 
-      // Define the required payment amount
-      const REQUIRED_PAYMENT_AMOUNT = Number(config.required_payment_amount); // e.g., 1000 cents = $10.00
+        console.log('Checkout session completed:', session); // Log the entire session object
 
-      // Get the total amount paid from the session
-      const amountTotal = session.amount_total ?? 0;
+        const customerId = session.customer as string;
+        const subscriptionId = session.subscription as string; // This should contain the subscription ID
 
-      // Validate the payment amount
-      if (amountTotal !== REQUIRED_PAYMENT_AMOUNT) {
-        console.error(
-          `Invalid payment amount. Expected: ${REQUIRED_PAYMENT_AMOUNT / 100}, Received: ${amountTotal / 100}`
-        );
-        return;
+        console.log('Customer ID:', customerId);
+        console.log('Subscription ID:', subscriptionId); // Log to verify
+
+        // Find the user by customer ID
+        const user = await User.findOne({ stripeCustomerId: customerId });
+        if (!user) {
+          console.error('User not found for customer ID:', customerId);
+          return;
+        }
+
+        // Update the user's subscription status and ID
+        user.isSubscribed = true;
+        user.subscriptionDate = new Date();
+        user.stripeSubscriptionId = subscriptionId; // Update the subscription ID
+        await user.save();
+
+        console.log('User subscription updated:', user);
+        break;
       }
 
-      if (userId) {
-        console.log(`Updating subscription for user: ${userId}`);
-        // Update user's subscription status and last payment info
-        await User.findByIdAndUpdate(userId, {
-          isSubscribed: true,
-          subscriptionDate: new Date(),
-          lastPayment: {
-            amount: amountTotal / 100, // Convert cents to dollars
-            currency: session.currency || 'usd',
-            status: 'completed',
-            transactionId: session.id,
-            paymentDate: new Date(),
-          },
-        });
-        console.log('Subscription updated successfully.');
-      }
-    } else {
-      console.warn(`Unhandled event type: ${event.type}`);
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
     }
   } catch (error) {
     console.error('Error handling Stripe webhook:', error);
   }
 };
+
+
 
 export const PaymentService = {
   handleStripeWebhook,

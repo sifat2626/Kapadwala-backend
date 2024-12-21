@@ -8,7 +8,7 @@ const router = Router();
 
 // Route to create a payment session
 router.post(
-  '/create-session', PaymentController.createPayment
+  '/create-session',protect(), PaymentController.createPayment
 );
 
 // // Route to handle Stripe webhook

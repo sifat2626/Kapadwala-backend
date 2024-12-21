@@ -32,7 +32,7 @@ const userSchema = new mongoose_1.Schema({
     password: {
         type: String,
         required: [true, 'Password is required'],
-        select: false, // Exclude by default
+        select: false, // Exclude by default for security
     },
     role: {
         type: String,
@@ -76,6 +76,14 @@ const userSchema = new mongoose_1.Schema({
             default: null,
         },
     },
+    stripeCustomerId: {
+        type: String,
+        default: null, // Stores Stripe Customer ID
+    },
+    stripeSubscriptionId: {
+        type: String,
+        default: null, // Stores Stripe Subscription ID
+    },
     otp: {
         type: String, // Store the OTP securely (e.g., hashed)
         select: false,
@@ -86,7 +94,7 @@ const userSchema = new mongoose_1.Schema({
 }, {
     timestamps: true, // Adds createdAt and updatedAt fields
 });
-// Middleware to hash password
+// Middleware to hash password before saving
 userSchema.pre('save', function (next) {
     return __awaiter(this, void 0, void 0, function* () {
         if (this.isModified('password')) {
@@ -95,23 +103,24 @@ userSchema.pre('save', function (next) {
         next();
     });
 });
-// Remove password after save
+// Middleware to remove password from the saved document
 userSchema.post('save', function (doc, next) {
     doc.password = '';
     next();
 });
-// Static methods
+// Static method to check if a user exists by email
 userSchema.statics.isUserExistsByEmail = function (email) {
     return __awaiter(this, void 0, void 0, function* () {
         return exports.User.findOne({ email }).select('+password');
     });
 };
+// Static method to verify if the password matches
 userSchema.statics.isPasswordMatched = function (plainTextPassword, hashedPassword) {
     return __awaiter(this, void 0, void 0, function* () {
         return yield bcrypt_1.default.compare(plainTextPassword, hashedPassword);
     });
 };
-// Instance method to generate an OTP
+// Instance method to generate and hash an OTP
 userSchema.methods.generateOtp = function () {
     const otp = crypto_1.default.randomInt(100000, 999999).toString(); // Generate a 6-digit OTP
     this.otp = crypto_1.default.createHash('sha256').update(otp).digest('hex'); // Hash the OTP for security

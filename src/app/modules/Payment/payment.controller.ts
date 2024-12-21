@@ -5,82 +5,95 @@ import sendResponse from '../../utils/sendResponse';
 import httpStatus from 'http-status';
 import config from '../../config';
 import { PaymentService } from './payment.service';
+import { User } from '../User/user.model'
 
 // Create a Stripe payment session
-const createPayment: RequestHandler = catchAsync(async (req: Request, res: Response) => {
+const createPayment: RequestHandler = async (req, res) => {
   try {
-    // Initialize Stripe
-    const stripe = new Stripe(config.stripe_secret_key as string, { apiVersion: '2024-11-20.acacia' });
-
-    // Extract currency and amount from the request body
-    const { currency, amount } = req.body;
-
-    // Validate input
-    if (!currency || typeof currency !== 'string') {
-      return sendResponse(res, {
-        statusCode: httpStatus.BAD_REQUEST,
-        success: false,
-        message: 'Invalid or missing currency. Please provide a valid currency.',
-        data: null,
-      });
-    }
-
-    if (!amount || typeof amount !== 'number' || amount <= 0) {
-      return sendResponse(res, {
-        statusCode: httpStatus.BAD_REQUEST,
-        success: false,
-        message: 'Invalid or missing amount. Please provide a valid positive amount.',
-        data: null,
-      });
-    }
-
-    // Create a Stripe payment session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency,
-            product_data: { name: 'Product Name' },
-            unit_amount: amount,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${config.client_url}/success`,
-      cancel_url: `${config.client_url}/cancel`,
+    const stripe = new Stripe(config.stripe_secret_key as string, {
+      apiVersion: '2024-11-20.acacia',
     });
 
-    // Return success response
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
+    // Step 1: Extract user ID from authentication middleware
+    const userId = req.user._id; // Assuming `req.user` is populated by authentication middleware
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required to create a subscription.',
+      });
+    }
+
+    // Step 2: Fetch the user from the database
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.',
+      });
+    }
+
+    // Step 3: Create or retrieve the Stripe customer
+    let stripeCustomerId = user.stripeCustomerId;
+    if (!stripeCustomerId) {
+      try {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.name,
+        });
+        stripeCustomerId = customer.id;
+
+        // Save the Stripe customer ID in the user record
+        user.stripeCustomerId = stripeCustomerId;
+        await user.save();
+      } catch (error) {
+        console.error('Error creating Stripe customer:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to create Stripe customer.',
+        });
+      }
+    }
+
+    // Step 4: Create a Stripe Checkout session
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'], // Accept card payments
+        customer: stripeCustomerId,
+        line_items: [
+          {
+            price: config.stripe_price_id, // Replace with your Stripe price ID
+            quantity: 1,
+          },
+        ],
+        mode: 'subscription', // Ensure the mode is set to 'subscription'
+        success_url: `${config.client_url}/success?session_id={CHECKOUT_SESSION_ID}`, // Redirect on success
+        cancel_url: `${config.client_url}/cancel`, // Redirect on cancellation
+      });
+    } catch (error) {
+      console.error('Error creating Stripe Checkout session:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create Stripe Checkout session.',
+      });
+    }
+
+    // Step 5: Return the session URL to the client
+    res.status(200).json({
       success: true,
-      message: 'Payment session created successfully.',
-      data: session,
+      message: 'Checkout session created successfully.',
+      data: {
+        url: session.url, // Stripe-hosted payment page URL
+      },
     });
   } catch (error) {
-    console.error('Error creating payment session:', error);
-
-    // Check for specific Stripe errors
-    if (error instanceof Stripe.errors.StripeError) {
-      return sendResponse(res, {
-        statusCode: httpStatus.BAD_REQUEST,
-        success: false,
-        message: error.message || 'An error occurred while creating the payment session with Stripe.',
-        data: null,
-      });
-    }
-
-    // Generic error response
-    sendResponse(res, {
-      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+    console.error('Error in createPayment function:', error);
+    res.status(500).json({
       success: false,
-      message: 'An internal server error occurred while creating the payment session.',
-      data: null,
+      message: 'An internal server error occurred while creating the subscription.',
     });
   }
-});
+};
 
 // Handle Stripe webhook
 const stripeWebhook: RequestHandler = catchAsync(async (req, res) => {
