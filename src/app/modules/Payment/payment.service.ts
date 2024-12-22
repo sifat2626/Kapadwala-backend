@@ -49,7 +49,7 @@ const handleStripeWebhook = async (event: Stripe.Event) => {
               paymentDetails = {
                 amount: paymentIntent.amount / 100, // Convert from cents to dollars
                 currency: paymentIntent.currency,
-                status: paymentIntent.status as 'completed' | 'pending' | 'failed',
+                status: paymentIntent.status as 'pending' | 'succeeded' | 'failed', // Use Stripe-compatible status
                 transactionId: paymentIntent.id,
                 paymentDate: new Date(paymentIntent.created * 1000), // Convert timestamp to Date
               };
