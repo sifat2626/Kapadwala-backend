@@ -19,7 +19,7 @@ router.get('/',protect(), CompanyController.getAllCompanies);
 
 router.get('/:id',protect(), CompanyController.getCompanyById);
 
-router.get('/deals/:companyName',protect(), CompanyController.getDealsByCompanyName);
+router.get('/deals/:companyName/',protect(), CompanyController.getDealsByCompanyName);
 
 router.get('/active-deals/:companyName',protect(), CompanyController.getActiveDealsByCompany);
 

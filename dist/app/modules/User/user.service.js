@@ -60,9 +60,18 @@ const addFavoriteCompany = (userId, companyId) => __awaiter(void 0, void 0, void
     const company = yield company_model_1.Company.findById(companyId);
     if (!company)
         throw new Error('Company not found');
-    const user = yield user_model_1.User.findByIdAndUpdate(userId, { $addToSet: { favorites: companyId } }, // Prevent duplicates
+    // Fetch the user to check the number of favorite companies
+    const user = yield user_model_1.User.findById(userId).populate('favorites', 'name');
+    if (!user)
+        throw new Error('User not found');
+    // Check if the user already has 20 favorite companies
+    if (user.favorites.length >= 20) {
+        throw new Error('You can only have up to 20 favorite companies.');
+    }
+    // Add the company to the user's favorites if the limit is not reached
+    const updatedUser = yield user_model_1.User.findByIdAndUpdate(userId, { $addToSet: { favorites: companyId } }, // Prevent duplicates
     { new: true }).populate('favorites', 'name'); // Populate favorite companies
-    return user;
+    return updatedUser;
 });
 const removeFavoriteCompany = (userId, companyId) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield user_model_1.User.findByIdAndUpdate(userId, { $pull: { favorites: companyId } }, // Remove the company ID

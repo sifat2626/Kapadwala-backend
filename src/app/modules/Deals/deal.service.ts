@@ -19,6 +19,7 @@ interface CSVRow {
 // Process CSV Data
 const processCSVData = async (buffer: any): Promise<string> => {
   const deals: CSVRow[] = [];
+  const invalidDeals: CSVRow[] = [];
 
   await new Promise<void>((resolve, reject) => {
     const bufferStream = new PassThrough();
@@ -36,6 +37,7 @@ const processCSVData = async (buffer: any): Promise<string> => {
     updatedDeals: 0,
     newCompanies: 0,
     newVendors: 0,
+    invalidExpiryDates: 0,
   };
 
   const companyMap = new Map<string, string>();
@@ -48,17 +50,34 @@ const processCSVData = async (buffer: any): Promise<string> => {
   existingVendors.forEach((vendor) => vendorMap.set(vendor.name, vendor._id));
 
   for (const deal of deals) {
-    const { title, percentage, type, vendorName, companyName, expiryDate, link } = deal;
+    const { title, percentage = 0, type, vendorName, companyName, expiryDate, link } = deal;
 
     // Validate mandatory fields
     if (!title || !type || !vendorName || !companyName || !expiryDate || !link) {
-      console.error(`Invalid deal entry, skipping: ${JSON.stringify(deal)}`);
+      invalidDeals.push(deal);
       continue;
     }
 
-    // Optional: Log creditcard deals with missing percentage
-    if (type === 'creditcard' && !percentage) {
-      console.log(`Credit card deal without percentage: ${title}`);
+    // Parse expiryDate to handle both `DD/MM/YYYY` and `YYYY-MM-DD` formats
+    let parsedExpiryDate: Date | null = null;
+
+    if (expiryDate.includes('/')) {
+      // Handle DD/MM/YYYY format
+      const [day, month, year] = expiryDate.split('/');
+      if (day && month && year) {
+        parsedExpiryDate = new Date(`${year}-${month}-${day}`);
+      }
+    } else if (expiryDate.includes('-')) {
+      // Handle YYYY-MM-DD format
+      parsedExpiryDate = new Date(expiryDate);
+    }
+
+    // Check if expiryDate is valid
+    if (!parsedExpiryDate || isNaN(parsedExpiryDate.getTime())) {
+      console.error(`Invalid expiry date for deal: ${JSON.stringify(deal)}`);
+      results.invalidExpiryDates++;
+      invalidDeals.push(deal);
+      continue;
     }
 
     let companyId = companyMap.get(companyName);
@@ -81,9 +100,9 @@ const processCSVData = async (buffer: any): Promise<string> => {
 
     if (existingDeal) {
       existingDeal.percentage = percentage;
-      existingDeal.expiryDate = new Date(expiryDate);
+      existingDeal.expiryDate = parsedExpiryDate;
       existingDeal.link = link;
-      existingDeal.isActive = new Date(expiryDate) > new Date();
+      existingDeal.isActive = parsedExpiryDate > new Date();
       await existingDeal.save();
       results.updatedDeals++;
     } else {
@@ -93,16 +112,17 @@ const processCSVData = async (buffer: any): Promise<string> => {
         type,
         vendorId,
         companyId,
-        expiryDate: new Date(expiryDate),
+        expiryDate: parsedExpiryDate,
         link,
-        isActive: new Date(expiryDate) > new Date(),
+        isActive: parsedExpiryDate > new Date(),
       });
       results.createdDeals++;
     }
   }
 
-  return `Processed ${deals.length} deals.\nDetails: ${JSON.stringify(results)}`;
+  return `Processed ${deals.length} deals.\nDetails: ${JSON.stringify(results)}\nInvalid Deals: ${invalidDeals.length}`;
 };
+
 
 
 // Fetch All Deals

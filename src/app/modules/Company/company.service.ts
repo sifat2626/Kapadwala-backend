@@ -34,29 +34,35 @@ const getCompanyById = async (id: string) => {
 };
 
 const getDealsByCompanyName = async (companyName: string, query: any) => {
-  const { page = 1, limit = 10 } = query;
+  const { page = 1, limit = 10, type = null } = query;
   const skip = (page - 1) * Number(limit);
 
   // Find the company by name
-  const company = await Company.findOne({ name: companyName });
+  const company = await Company.findOne({ name: { $regex: companyName, $options: 'i' } });
   if (!company) throw new Error('Company not found');
 
   const currentDate = new Date();
 
   // Fetch all non-expired deals related to this company with pagination
-  const deals = await Deal.find({
+  const queryObj: any = {
     companyId: company._id,
     expiryDate: { $gte: currentDate },
-  })
+  };
+
+  // Add 'type' to the query if it is provided
+  if (type) {
+    queryObj.type = type;
+  }
+
+  // Fetch all non-expired deals related to this company with pagination
+  const deals = await Deal.find(queryObj)
+    .sort({percentage:-1})
     .skip(skip)
     .limit(Number(limit))
     .populate('vendorId', 'name logo website')
     .populate('companyId', 'name');
 
-  const total = await Deal.countDocuments({
-    companyId: company._id,
-    expiryDate: { $gte: currentDate },
-  });
+  const total = await Deal.countDocuments(queryObj);
 
   return {
     meta: {

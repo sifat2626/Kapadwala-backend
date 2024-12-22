@@ -61,14 +61,25 @@ const addFavoriteCompany = async (userId: string, companyId: string) => {
   const company = await Company.findById(companyId);
   if (!company) throw new Error('Company not found');
 
-  const user = await User.findByIdAndUpdate(
+  // Fetch the user to check the number of favorite companies
+  const user = await User.findById(userId).populate('favorites', 'name');
+  if (!user) throw new Error('User not found');
+
+  // Check if the user already has 20 favorite companies
+  if (user.favorites.length >= 20) {
+    throw new Error('You can only have up to 20 favorite companies.');
+  }
+
+  // Add the company to the user's favorites if the limit is not reached
+  const updatedUser = await User.findByIdAndUpdate(
     userId,
     { $addToSet: { favorites: companyId } }, // Prevent duplicates
     { new: true },
   ).populate('favorites', 'name'); // Populate favorite companies
 
-  return user;
+  return updatedUser;
 };
+
 
 const removeFavoriteCompany = async (userId: string, companyId: string) => {
   const user = await User.findByIdAndUpdate(

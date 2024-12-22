@@ -15,7 +15,7 @@ const router = (0, express_1.Router)();
 router.post('/', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), (0, validateRequest_1.default)(company_validation_1.CompanyValidation.createCompany), company_controller_1.CompanyController.createCompany);
 router.get('/', (0, protect_1.default)(), company_controller_1.CompanyController.getAllCompanies);
 router.get('/:id', (0, protect_1.default)(), company_controller_1.CompanyController.getCompanyById);
-router.get('/deals/:companyName', (0, protect_1.default)(), company_controller_1.CompanyController.getDealsByCompanyName);
+router.get('/deals/:companyName/', (0, protect_1.default)(), company_controller_1.CompanyController.getDealsByCompanyName);
 router.get('/active-deals/:companyName', (0, protect_1.default)(), company_controller_1.CompanyController.getActiveDealsByCompany);
 router.patch('/:id', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), (0, validateRequest_1.default)(company_validation_1.CompanyValidation.updateCompany), company_controller_1.CompanyController.updateCompany);
 router.delete('/:id', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), company_controller_1.CompanyController.deleteCompany);

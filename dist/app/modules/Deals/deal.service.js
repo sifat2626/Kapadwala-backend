@@ -23,6 +23,7 @@ const returnWithMeta_1 = require("../../utils/returnWithMeta");
 // Process CSV Data
 const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
     const deals = [];
+    const invalidDeals = [];
     yield new Promise((resolve, reject) => {
         const bufferStream = new stream_1.PassThrough();
         bufferStream.end(buffer);
@@ -37,6 +38,7 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
         updatedDeals: 0,
         newCompanies: 0,
         newVendors: 0,
+        invalidExpiryDates: 0,
     };
     const companyMap = new Map();
     const vendorMap = new Map();
@@ -45,15 +47,31 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
     existingCompanies.forEach((company) => companyMap.set(company.name, company._id));
     existingVendors.forEach((vendor) => vendorMap.set(vendor.name, vendor._id));
     for (const deal of deals) {
-        const { title, percentage, type, vendorName, companyName, expiryDate, link } = deal;
+        const { title, percentage = 0, type, vendorName, companyName, expiryDate, link } = deal;
         // Validate mandatory fields
         if (!title || !type || !vendorName || !companyName || !expiryDate || !link) {
-            console.error(`Invalid deal entry, skipping: ${JSON.stringify(deal)}`);
+            invalidDeals.push(deal);
             continue;
         }
-        // Optional: Log creditcard deals with missing percentage
-        if (type === 'creditcard' && !percentage) {
-            console.log(`Credit card deal without percentage: ${title}`);
+        // Parse expiryDate to handle both `DD/MM/YYYY` and `YYYY-MM-DD` formats
+        let parsedExpiryDate = null;
+        if (expiryDate.includes('/')) {
+            // Handle DD/MM/YYYY format
+            const [day, month, year] = expiryDate.split('/');
+            if (day && month && year) {
+                parsedExpiryDate = new Date(`${year}-${month}-${day}`);
+            }
+        }
+        else if (expiryDate.includes('-')) {
+            // Handle YYYY-MM-DD format
+            parsedExpiryDate = new Date(expiryDate);
+        }
+        // Check if expiryDate is valid
+        if (!parsedExpiryDate || isNaN(parsedExpiryDate.getTime())) {
+            console.error(`Invalid expiry date for deal: ${JSON.stringify(deal)}`);
+            results.invalidExpiryDates++;
+            invalidDeals.push(deal);
+            continue;
         }
         let companyId = companyMap.get(companyName);
         if (!companyId) {
@@ -72,9 +90,9 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
         const existingDeal = yield deals_model_1.Deal.findOne({ title, vendorId, companyId });
         if (existingDeal) {
             existingDeal.percentage = percentage;
-            existingDeal.expiryDate = new Date(expiryDate);
+            existingDeal.expiryDate = parsedExpiryDate;
             existingDeal.link = link;
-            existingDeal.isActive = new Date(expiryDate) > new Date();
+            existingDeal.isActive = parsedExpiryDate > new Date();
             yield existingDeal.save();
             results.updatedDeals++;
         }
@@ -85,14 +103,14 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
                 type,
                 vendorId,
                 companyId,
-                expiryDate: new Date(expiryDate),
+                expiryDate: parsedExpiryDate,
                 link,
-                isActive: new Date(expiryDate) > new Date(),
+                isActive: parsedExpiryDate > new Date(),
             });
             results.createdDeals++;
         }
     }
-    return `Processed ${deals.length} deals.\nDetails: ${JSON.stringify(results)}`;
+    return `Processed ${deals.length} deals.\nDetails: ${JSON.stringify(results)}\nInvalid Deals: ${invalidDeals.length}`;
 });
 // Fetch All Deals
 const getAllDeals = (query) => __awaiter(void 0, void 0, void 0, function* () {

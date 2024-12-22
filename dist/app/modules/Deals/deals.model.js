@@ -11,6 +11,8 @@ const dealSchema = new mongoose_1.Schema({
     percentage: {
         type: Number,
         min: [0, 'Percentage cannot be less than 0'],
+        default: 0,
+        // eslint-disable-next-line no-unused-vars
         required: function () {
             return this.type !== 'creditcard';
         },

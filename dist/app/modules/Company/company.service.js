@@ -40,26 +40,30 @@ const getCompanyById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     return company;
 });
 const getDealsByCompanyName = (companyName, query) => __awaiter(void 0, void 0, void 0, function* () {
-    const { page = 1, limit = 10 } = query;
+    const { page = 1, limit = 10, type = null } = query;
     const skip = (page - 1) * Number(limit);
     // Find the company by name
-    const company = yield company_model_1.Company.findOne({ name: companyName });
+    const company = yield company_model_1.Company.findOne({ name: { $regex: companyName, $options: 'i' } });
     if (!company)
         throw new Error('Company not found');
     const currentDate = new Date();
     // Fetch all non-expired deals related to this company with pagination
-    const deals = yield deals_model_1.Deal.find({
+    const queryObj = {
         companyId: company._id,
         expiryDate: { $gte: currentDate },
-    })
+    };
+    // Add 'type' to the query if it is provided
+    if (type) {
+        queryObj.type = type;
+    }
+    // Fetch all non-expired deals related to this company with pagination
+    const deals = yield deals_model_1.Deal.find(queryObj)
+        .sort({ percentage: -1 })
         .skip(skip)
         .limit(Number(limit))
         .populate('vendorId', 'name logo website')
         .populate('companyId', 'name');
-    const total = yield deals_model_1.Deal.countDocuments({
-        companyId: company._id,
-        expiryDate: { $gte: currentDate },
-    });
+    const total = yield deals_model_1.Deal.countDocuments(queryObj);
     return {
         meta: {
             total,
