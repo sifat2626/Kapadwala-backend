@@ -5,6 +5,7 @@ import { DealControllers } from './deal.controller';
 import { upload } from '../../utils/upload'
 import protect from '../../middlewares/protect'
 import limitUnSubscribedUser from '../../middlewares/limitUnSubscribedUser'
+import checkSubscription from '../../middlewares/checkSubscription'
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.post(
 
 router.get('/active',protect(),limitUnSubscribedUser(), DealControllers.getAllActiveDeals);
 
-router.get('/cashback-rate/:companyName',protect(), DealControllers.getBestCashbackRateByCompany);
+router.get('/cashback-rate/:companyName',protect(), checkSubscription(), DealControllers.getBestCashbackRateByCompany);
 
 router.get('/giftcard-rate/:companyName',protect(), DealControllers.getBestGiftcardRateByCompany);
 

@@ -56,7 +56,7 @@ const userSchema = new Schema<TUser, UserModel>(
       },
       status: {
         type: String,
-        enum: ['pending', 'completed', 'failed'],
+        enum: ['pending', 'succeeded', 'failed'],
         default: null, // Status of the last payment
       },
       transactionId: {

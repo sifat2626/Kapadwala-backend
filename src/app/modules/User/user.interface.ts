@@ -18,7 +18,7 @@ export interface TUser {
   lastPayment?: {
     amount: number; // Payment amount
     currency: string; // Payment currency (e.g., 'usd')
-    status: 'pending' | 'completed' | 'failed'; // Payment status
+    status: 'pending' | 'succeeded' | 'failed'; // Payment status
     transactionId: string | null; // Unique transaction ID
     paymentDate: Date | null; // Date of the last successful payment
   };
