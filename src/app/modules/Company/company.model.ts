@@ -9,9 +9,6 @@ const companySchema = new Schema<TCompany, CompanyModel>(
       unique: true,
       trim: true,
     },
-    description: {
-      type: String,
-    },
     logo: {
       type: String,
     },

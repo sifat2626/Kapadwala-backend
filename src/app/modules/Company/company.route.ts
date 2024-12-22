@@ -5,6 +5,7 @@ import { CompanyValidation } from './company.validation';
 import auth from '../../middlewares/auth'
 import protect from '../../middlewares/protect'
 import { USER_ROLE } from '../User/user.constant'
+import { upload } from '../../utils/upload'
 
 const router = Router();
 
@@ -13,6 +14,13 @@ router.post(
   auth(USER_ROLE.admin,USER_ROLE.superAdmin),
   validateRequest(CompanyValidation.createCompany),
   CompanyController.createCompany,
+);
+
+router.post(
+  '/upload-csv',
+  auth(USER_ROLE.admin,USER_ROLE.superAdmin), // Only admins can upload CSV files
+  upload.single('file'), // Accepts a single file with the key 'file'
+  CompanyController.uploadCompaniesFromCSV,
 );
 
 router.get('/',protect(), CompanyController.getAllCompanies);

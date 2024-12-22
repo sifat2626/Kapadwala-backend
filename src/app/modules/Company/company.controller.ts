@@ -88,8 +88,26 @@ const deleteCompany: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const uploadCompaniesFromCSV: RequestHandler = catchAsync(async (req, res) => {
+  if (!req.file) {
+    throw new Error('No file uploaded.');
+  }
+
+  // Parse the CSV file
+  const buffer = req.file.buffer;
+  const companies = await CompanyService.uploadCompaniesFromCSV(buffer);
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: 'Companies uploaded successfully.',
+    data: companies, // Return the created/updated companies
+  });
+});
+
 export const CompanyController = {
   createCompany,
+  uploadCompaniesFromCSV,
   getAllCompanies,
   getCompanyById,
   getDealsByCompanyName,

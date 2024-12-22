@@ -86,8 +86,23 @@ const deleteCompany = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
         data: '',
     });
 }));
+const uploadCompaniesFromCSV = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!req.file) {
+        throw new Error('No file uploaded.');
+    }
+    // Parse the CSV file
+    const buffer = req.file.buffer;
+    const companies = yield company_service_1.CompanyService.uploadCompaniesFromCSV(buffer);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.CREATED,
+        success: true,
+        message: 'Companies uploaded successfully.',
+        data: companies, // Return the created/updated companies
+    });
+}));
 exports.CompanyController = {
     createCompany,
+    uploadCompaniesFromCSV,
     getAllCompanies,
     getCompanyById,
     getDealsByCompanyName,

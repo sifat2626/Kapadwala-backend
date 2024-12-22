@@ -9,9 +9,6 @@ const companySchema = new mongoose_1.Schema({
         unique: true,
         trim: true,
     },
-    description: {
-        type: String,
-    },
     logo: {
         type: String,
     },

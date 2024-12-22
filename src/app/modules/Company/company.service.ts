@@ -1,11 +1,61 @@
 import { Company } from './company.model';
 import { TCompany } from './company.type';
 import { Deal } from '../Deals/deals.model';
+import { Buffer } from 'buffer';
+import { Readable } from 'stream';
+import csvParser from 'csv-parser';
 
 const createCompany = async (data: TCompany) => {
   const company = await Company.create(data);
   return company;
 };
+
+const uploadCompaniesFromCSV = async (buffer: Buffer) => {
+  const companies: TCompany[] = [];
+
+  // Parse the CSV buffer
+  await new Promise<void>((resolve, reject) => {
+    const stream = Readable.from(buffer);
+    stream
+      .pipe(csvParser())
+      .on('data', (row) => {
+        companies.push({
+          name: row.name,
+          logo: row.logo || '', // Optional field
+          website: row.website || '', // Optional field
+        });
+      })
+      .on('end', resolve)
+      .on('error', reject);
+  });
+
+  const results = {
+    createdCompanies: 0,
+    updatedCompanies: 0,
+  };
+
+  // Iterate over the parsed companies and add/update them in the database
+  for (const company of companies) {
+    const existingCompany = await Company.findOne({ name: company.name });
+
+    console.log('existingCompany', existingCompany);
+
+    if (existingCompany) {
+      // Update the existing company
+      existingCompany.logo = company.logo || existingCompany.logo;
+      existingCompany.website = company.website || existingCompany.website;
+      await existingCompany.save();
+      results.updatedCompanies++;
+    } else {
+      // Create a new company
+      await Company.create(company);
+      results.createdCompanies++;
+    }
+  }
+
+  return results;
+};
+
 
 const getAllCompanies = async (query: any) => {
   const { page = 1, limit = 10 } = query;
@@ -133,6 +183,7 @@ const deleteCompany = async (id: string) => {
 
 export const CompanyService = {
   createCompany,
+  uploadCompaniesFromCSV,
   getAllCompanies,
   getCompanyById,
   getDealsByCompanyName,

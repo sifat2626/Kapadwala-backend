@@ -8,13 +8,58 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CompanyService = void 0;
 const company_model_1 = require("./company.model");
 const deals_model_1 = require("../Deals/deals.model");
+const stream_1 = require("stream");
+const csv_parser_1 = __importDefault(require("csv-parser"));
 const createCompany = (data) => __awaiter(void 0, void 0, void 0, function* () {
     const company = yield company_model_1.Company.create(data);
     return company;
+});
+const uploadCompaniesFromCSV = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
+    const companies = [];
+    // Parse the CSV buffer
+    yield new Promise((resolve, reject) => {
+        const stream = stream_1.Readable.from(buffer);
+        stream
+            .pipe((0, csv_parser_1.default)())
+            .on('data', (row) => {
+            companies.push({
+                name: row.name,
+                logo: row.logo || '', // Optional field
+                website: row.website || '', // Optional field
+            });
+        })
+            .on('end', resolve)
+            .on('error', reject);
+    });
+    const results = {
+        createdCompanies: 0,
+        updatedCompanies: 0,
+    };
+    // Iterate over the parsed companies and add/update them in the database
+    for (const company of companies) {
+        const existingCompany = yield company_model_1.Company.findOne({ name: company.name });
+        console.log('existingCompany', existingCompany);
+        if (existingCompany) {
+            // Update the existing company
+            existingCompany.logo = company.logo || existingCompany.logo;
+            existingCompany.website = company.website || existingCompany.website;
+            yield existingCompany.save();
+            results.updatedCompanies++;
+        }
+        else {
+            // Create a new company
+            yield company_model_1.Company.create(company);
+            results.createdCompanies++;
+        }
+    }
+    return results;
 });
 const getAllCompanies = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const { page = 1, limit = 10 } = query;
@@ -124,6 +169,7 @@ const deleteCompany = (id) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.CompanyService = {
     createCompany,
+    uploadCompaniesFromCSV,
     getAllCompanies,
     getCompanyById,
     getDealsByCompanyName,
