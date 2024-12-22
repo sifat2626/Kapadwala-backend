@@ -30,11 +30,15 @@ const userSchema = new Schema<TUser, UserModel>(
     },
     isSubscribed: {
       type: Boolean,
-      default: false,
+      default: false, // Indicates if the user currently has an active subscription
     },
     subscriptionDate: {
       type: Date,
-      default: null,
+      default: null, // Tracks the start date of the subscription
+    },
+    expiresAt: {
+      type: Date,
+      default: null, // Tracks when the subscription access should expire
     },
     favorites: [
       {

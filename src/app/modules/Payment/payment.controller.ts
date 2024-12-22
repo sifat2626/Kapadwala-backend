@@ -1,4 +1,4 @@
-import { RequestHandler, Request, Response } from 'express';
+import { RequestHandler } from 'express';
 import Stripe from 'stripe';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
@@ -95,6 +95,97 @@ const createPayment: RequestHandler = async (req, res) => {
   }
 };
 
+const cancelSubscription: RequestHandler = catchAsync(async (req, res) => {
+  const stripe = new Stripe(config.stripe_secret_key as string, {
+    apiVersion: '2024-11-20.acacia',
+  });
+
+  const userId = req.user._id; // Assuming authentication middleware provides this
+  if (!userId) {
+    return sendResponse(res, {
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: 'User ID is required to cancel a subscription.',
+      data: null,
+    });
+  }
+
+  // Fetch the user from the database
+  const user = await User.findById(userId);
+  if (!user || !user.stripeSubscriptionId) {
+    return sendResponse(res, {
+      statusCode: httpStatus.NOT_FOUND,
+      success: false,
+      message: 'No active subscription found for the user.',
+      data: null,
+    });
+  }
+
+  try {
+    // Retrieve the subscription from Stripe
+    const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+
+    // Check if the subscription is already canceled
+    if (subscription.status === 'canceled') {
+      return sendResponse(res, {
+        statusCode: httpStatus.BAD_REQUEST,
+        success: false,
+        message: 'The subscription is already canceled.',
+        data: null,
+      });
+    }
+
+    // Cancel the subscription in Stripe
+    const canceledSubscription = await stripe.subscriptions.cancel(user.stripeSubscriptionId);
+
+    // Update the user's subscription status and expiration date
+    user.isSubscribed = false; // Mark subscription as canceled immediately
+    user.stripeSubscriptionId = null; // Remove Stripe subscription ID
+
+    // Set `expiresAt` to the end of the current billing period
+    if (canceledSubscription.current_period_end) {
+      user.expiresAt = new Date(canceledSubscription.current_period_end * 1000); // Convert timestamp to Date
+    } else {
+      console.warn('No current_period_end found in canceled subscription.');
+      user.expiresAt = null;
+    }
+
+    await user.save(); // Save the updated user document
+
+    // Log the cancellation for auditing purposes
+    console.log(`Subscription canceled for user ID: ${userId}`);
+
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Subscription canceled successfully. Access will remain until the end of the billing period.',
+      data: {
+        expiresAt: user.expiresAt,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error canceling subscription:', error);
+
+    // Handle Stripe-specific errors
+    if (error.type === 'StripeInvalidRequestError') {
+      return sendResponse(res, {
+        statusCode: httpStatus.BAD_REQUEST,
+        success: false,
+        message: `Stripe error: ${error.message}`,
+        data: null,
+      });
+    }
+
+    // General error response
+    return sendResponse(res, {
+      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: 'Failed to cancel the subscription. Please try again later.',
+      data: null,
+    });
+  }
+});
+
 // Handle Stripe webhook
 const stripeWebhook: RequestHandler = catchAsync(async (req, res) => {
   const sig = req.headers['stripe-signature'] as string;
@@ -155,5 +246,6 @@ const stripeWebhook: RequestHandler = catchAsync(async (req, res) => {
 
 export const PaymentController = {
   createPayment,
+  cancelSubscription,
   stripeWebhook,
 };

@@ -11,8 +11,9 @@ export interface TUser {
   role: 'superAdmin' | 'admin' | 'user'; // Define user roles
   isSubscribed: boolean; // Tracks if the user is currently subscribed
   subscriptionDate: Date | null; // Date when the subscription started
+  expiresAt: Date | null; // Date when the subscription access should expire
   stripeCustomerId?: string; // Stripe Customer ID
-  stripeSubscriptionId?: string|null; // Stripe Subscription ID
+  stripeSubscriptionId?: string | null; // Stripe Subscription ID
   favorites: Types.ObjectId[]; // Array of references to Company IDs
   lastPayment?: {
     amount: number; // Payment amount

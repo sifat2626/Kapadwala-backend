@@ -28,8 +28,8 @@ app.use(
 )
 
 app.use(morgan('dev'))
-
-// application routes
+//
+// // application routes
 app.use('/api/v1', router)
 
 app.get('/', (_req: Request, res: Response) => {
