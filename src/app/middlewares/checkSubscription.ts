@@ -12,18 +12,32 @@ const checkSubscription = () => {
       throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized!');
     }
 
-    // Check if the user exists and is subscribed
+    // Fetch the user from the database
     const user = await User.findById(userId);
     if (!user) {
       throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
     }
 
-    if (!user.isSubscribed) {
-      throw new AppError(httpStatus.FORBIDDEN, 'You must be subscribed to access this resource!');
+    // Check if the subscription has expired
+    const currentDate = new Date();
+    if (user.expiresAt && currentDate > user.expiresAt) {
+      // Update the user's subscription status if expired
+      user.isSubscribed = false;
+      await user.save();
+
+      throw new AppError(
+        httpStatus.FORBIDDEN,
+        'Your subscription has expired. Please renew to access this resource!'
+      );
     }
 
-    // Proceed to the next middleware or controller
-    next();
+    // Allow access if the subscription is not expired
+    if (user.expiresAt && currentDate <= user.expiresAt) {
+      return next(); // Grant access if still within the subscription period
+    }
+
+    // If no valid expiration date exists, block access
+    throw new AppError(httpStatus.FORBIDDEN, 'You must be subscribed to access this resource!');
   });
 };
 
