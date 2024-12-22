@@ -1,11 +1,58 @@
 import { Vendor } from './vendor.model';
 import { TVendor } from './vendor.type';
 import { Deal } from '../Deals/deals.model';
-import { returnWithMeta } from '../../utils/returnWithMeta';
+import { Readable } from 'stream';
+import csvParser from 'csv-parser';
+import { Buffer } from 'buffer';
+
 
 const createVendor = async (data: TVendor) => {
   const vendor = await Vendor.create(data);
   return vendor;
+};
+
+const uploadVendorsFromCSV = async (buffer: Buffer) => {
+  const vendors: TVendor[] = [];
+
+  // Parse the CSV buffer
+  await new Promise<void>((resolve, reject) => {
+    const stream = Readable.from(buffer);
+    stream
+      .pipe(csvParser())
+      .on('data', (row) => {
+        vendors.push({
+          name: row.name,
+          logo: row.logo || '', // Optional field
+          website: row.website || '', // Optional field
+        });
+      })
+      .on('end', resolve)
+      .on('error', reject);
+  });
+
+  const results = {
+    createdVendors: 0,
+    updatedVendors: 0,
+  };
+
+  // Iterate over the parsed vendors and add/update them in the database
+  for (const vendor of vendors) {
+    const existingVendor = await Vendor.findOne({ name: vendor.name });
+
+    if (existingVendor) {
+      // Update the existing vendor
+      existingVendor.logo = vendor.logo || existingVendor.logo;
+      existingVendor.website = vendor.website || existingVendor.website;
+      await existingVendor.save();
+      results.updatedVendors++;
+    } else {
+      // Create a new vendor
+      await Vendor.create(vendor);
+      results.createdVendors++;
+    }
+  }
+
+  return results;
 };
 
 const getAllVendors = async (query: any) => {
@@ -93,6 +140,7 @@ const deleteVendor = async (id: string) => {
 
 export const VendorService = {
   createVendor,
+  uploadVendorsFromCSV,
   getAllVendors,
   getVendorById,
   getDealsByVendorName,

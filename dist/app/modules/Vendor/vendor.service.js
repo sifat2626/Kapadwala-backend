@@ -8,13 +8,57 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VendorService = void 0;
 const vendor_model_1 = require("./vendor.model");
 const deals_model_1 = require("../Deals/deals.model");
+const stream_1 = require("stream");
+const csv_parser_1 = __importDefault(require("csv-parser"));
 const createVendor = (data) => __awaiter(void 0, void 0, void 0, function* () {
     const vendor = yield vendor_model_1.Vendor.create(data);
     return vendor;
+});
+const uploadVendorsFromCSV = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
+    const vendors = [];
+    // Parse the CSV buffer
+    yield new Promise((resolve, reject) => {
+        const stream = stream_1.Readable.from(buffer);
+        stream
+            .pipe((0, csv_parser_1.default)())
+            .on('data', (row) => {
+            vendors.push({
+                name: row.name,
+                logo: row.logo || '', // Optional field
+                website: row.website || '', // Optional field
+            });
+        })
+            .on('end', resolve)
+            .on('error', reject);
+    });
+    const results = {
+        createdVendors: 0,
+        updatedVendors: 0,
+    };
+    // Iterate over the parsed vendors and add/update them in the database
+    for (const vendor of vendors) {
+        const existingVendor = yield vendor_model_1.Vendor.findOne({ name: vendor.name });
+        if (existingVendor) {
+            // Update the existing vendor
+            existingVendor.logo = vendor.logo || existingVendor.logo;
+            existingVendor.website = vendor.website || existingVendor.website;
+            yield existingVendor.save();
+            results.updatedVendors++;
+        }
+        else {
+            // Create a new vendor
+            yield vendor_model_1.Vendor.create(vendor);
+            results.createdVendors++;
+        }
+    }
+    return results;
 });
 const getAllVendors = (query) => __awaiter(void 0, void 0, void 0, function* () {
     const { page = 1, limit = 10 } = query;
@@ -88,6 +132,7 @@ const deleteVendor = (id) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.VendorService = {
     createVendor,
+    uploadVendorsFromCSV,
     getAllVendors,
     getVendorById,
     getDealsByVendorName,

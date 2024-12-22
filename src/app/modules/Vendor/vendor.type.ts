@@ -1,7 +1,7 @@
 import { Model } from 'mongoose';
 
 export type TVendor = {
-  _id: string;
+  _id?: string;
   name: string;
   logo: string;
   website: string;

@@ -26,6 +26,20 @@ const createVendor = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
         data: vendor,
     });
 }));
+const uploadVendorsFromCSV = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!req.file) {
+        throw new Error('No file uploaded.');
+    }
+    // Parse the CSV file
+    const buffer = req.file.buffer;
+    const vendors = yield vendor_service_1.VendorService.uploadVendorsFromCSV(buffer);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.CREATED,
+        success: true,
+        message: 'Vendors uploaded successfully.',
+        data: vendors, // Return the created/updated vendors
+    });
+}));
 const getAllVendors = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const vendors = yield vendor_service_1.VendorService.getAllVendors(req.query);
     (0, sendResponse_1.default)(res, {
@@ -76,6 +90,7 @@ const deleteVendor = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
 }));
 exports.VendorController = {
     createVendor,
+    uploadVendorsFromCSV,
     getAllVendors,
     getVendorById,
     getDealsByVendorName,

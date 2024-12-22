@@ -11,8 +11,11 @@ const vendor_validation_1 = require("./vendor.validation");
 const user_constant_1 = require("../User/user.constant");
 const auth_1 = __importDefault(require("../../middlewares/auth"));
 const protect_1 = __importDefault(require("../../middlewares/protect"));
+const upload_1 = require("../../utils/upload");
 const router = (0, express_1.Router)();
 router.post('/', (0, validateRequest_1.default)(vendor_validation_1.VendorValidation.createVendor), (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), vendor_controller_1.VendorController.createVendor);
+router.post('/upload-csv', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), upload_1.upload.single('file'), // Handle single file upload with the key 'file'
+vendor_controller_1.VendorController.uploadVendorsFromCSV);
 router.get('/', (0, protect_1.default)(), vendor_controller_1.VendorController.getAllVendors);
 router.get('/:id', (0, protect_1.default)(), vendor_controller_1.VendorController.getVendorById);
 router.get('/deals/:vendorName', (0, protect_1.default)(), vendor_controller_1.VendorController.getDealsByVendorName);

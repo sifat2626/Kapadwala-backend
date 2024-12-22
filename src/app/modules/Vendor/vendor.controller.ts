@@ -15,6 +15,23 @@ const createVendor: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
+const uploadVendorsFromCSV: RequestHandler = catchAsync(async (req, res) => {
+  if (!req.file) {
+    throw new Error('No file uploaded.');
+  }
+
+  // Parse the CSV file
+  const buffer = req.file.buffer;
+  const vendors = await VendorService.uploadVendorsFromCSV(buffer);
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: 'Vendors uploaded successfully.',
+    data: vendors, // Return the created/updated vendors
+  });
+});
+
 const getAllVendors: RequestHandler = catchAsync(async (req, res) => {
   const vendors = await VendorService.getAllVendors(req.query);
 
@@ -75,6 +92,7 @@ const deleteVendor: RequestHandler = catchAsync(async (req, res) => {
 
 export const VendorController = {
   createVendor,
+  uploadVendorsFromCSV,
   getAllVendors,
   getVendorById,
   getDealsByVendorName,

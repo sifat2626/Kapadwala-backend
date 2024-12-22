@@ -5,6 +5,7 @@ import { VendorValidation } from './vendor.validation';
 import { USER_ROLE } from '../User/user.constant';
 import auth from '../../middlewares/auth'
 import protect from '../../middlewares/protect'
+import { upload } from '../../utils/upload'
 
 const router = Router();
 
@@ -14,6 +15,13 @@ router.post(
   auth(USER_ROLE.admin,USER_ROLE.superAdmin),
   VendorController.createVendor
 )
+
+router.post(
+  '/upload-csv',
+  auth(USER_ROLE.admin, USER_ROLE.superAdmin),
+  upload.single('file'), // Handle single file upload with the key 'file'
+  VendorController.uploadVendorsFromCSV,
+);
 
 router.get('/',protect(), VendorController.getAllVendors);
 
