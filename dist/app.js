@@ -19,7 +19,7 @@ app.post(`/api/v1/payments/webhook`, express_1.default.raw({ type: 'application/
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
 app.use((0, cors_1.default)({
-    origin: ['http://localhost:5173'],
+    origin: ['http://localhost:5173', 'http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     credentials: true,
