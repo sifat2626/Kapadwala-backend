@@ -17,10 +17,13 @@ router.post(
   AuthControllers.refreshToken,
 )
 
-// Request OTP
-router.post('/request-otp', AuthControllers.requestOtp);
+// Request email verification for password reset
+router.post('/request-email-verification', AuthControllers.requestEmailVerification);
 
-// Reset password using OTP
-router.post('/reset-password-with-otp', AuthControllers.resetPasswordWithOtp);
+// Verify email and reset password
+router.post(
+  '/verify-email-and-reset-password',
+  AuthControllers.validateEmailVerificationAndResetPassword,
+);
 
 export const AuthRoutes = router

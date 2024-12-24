@@ -6,6 +6,7 @@ import { TLoginUser } from './auth.interface'
 import { createToken, verifyToken } from './auth.utils'
 import { EmailService } from '../../utils/email.service'
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken'
 
 const loginUser = async (payload: TLoginUser) => {
   // checking if the user is exist
@@ -76,54 +77,61 @@ const refreshToken = async (token: string) => {
   }
 }
 
-const requestOtp = async (email: string): Promise<void> => {
+const requestEmailVerification = async (email: string): Promise<void> => {
   const user = await User.findOne({ email });
+
   if (!user) {
-    throw new Error('User not found');
+    throw new AppError(404, 'User not found!');
   }
 
-  // Generate OTP and save it
-  const otp = user.generateOtp();
-  await user.save({ validateBeforeSave: false });
+  console.log('creating token',config.jwt_email_verification_secret)
 
-  // Send OTP via email
-  const subject = 'Your OTP for Password Reset';
-  const text = `Your OTP is: ${otp}`;
-  const html = `<p>Your OTP is: <strong>${otp}</strong>. It is valid for 10 minutes.</p>`;
+  // Generate a verification token (JWT)
+  const verificationToken = jwt.sign(
+    { email: user.email },
+    config.jwt_email_verification_secret as string,
+    { expiresIn: '10m' }, // Valid for 10 minutes
+  );
+
+  console.log('verification token', verificationToken)
+
+  // Send the email with verification token
+  const verificationLink = `${config.client_url}/verify-email?token=${verificationToken}`;
+  const subject = 'Verify Your Email for Password Reset';
+  const text = `Please click the following link to verify your email for password reset: ${verificationLink}`;
+  const html = `<p>Please click the following link to verify your email for password reset:</p><a href="${verificationLink}">${verificationLink}</a>`;
 
   await EmailService.sendEmail(user.email, subject, text, html);
 };
 
-const validateOtpAndResetPassword = async (
-  email: string,
-  otp: string,
-  newPassword: string
+const validateEmailVerificationAndResetPassword = async (
+  token: string,
+  newPassword: string,
 ): Promise<void> => {
-  // Hash the provided OTP to compare with the stored hashed OTP
-  const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
+  try {
+    // Verify the token
+    const decoded = jwt.verify(
+      token,
+      config.jwt_email_verification_secret as string,
+    ) as { email: string };
 
-  // Find the user by email, hashed OTP, and ensure the OTP is not expired
-  const user = await User.findOne({
-    email,
-    otp: hashedOtp,
-    otpExpires: { $gt: Date.now() }, // Check if the OTP is still valid
-  });
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) {
+      throw new AppError(404, 'User not found!');
+    }
 
-  if (!user) {
-    throw new Error('Invalid or expired OTP');
+    // Update the user's password
+    user.password = newPassword; // The password will be hashed by the pre-save hook in the schema
+    await user.save();
+
+  } catch (err) {
+    throw new AppError(400, 'Invalid or expired token!');
   }
-
-  // Update password and clear OTP fields
-  user.password = newPassword; // The password will be hashed by the pre-save hook in the schema
-  user.otp = undefined; // Invalidate the OTP
-  user.otpExpires = undefined; // Clear OTP expiration time
-
-  await user.save(); // Save the updated user document
 };
 
 export const AuthServices = {
   loginUser,
   refreshToken,
-  requestOtp,
-  validateOtpAndResetPassword
+  requestEmailVerification,
+  validateEmailVerificationAndResetPassword
 }
