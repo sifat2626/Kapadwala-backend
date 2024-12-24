@@ -1,5 +1,4 @@
 import httpStatus from 'http-status'
-import config from '../../config'
 import catchAsync from '../../utils/catchAsync'
 import sendResponse from '../../utils/sendResponse'
 import { AuthServices } from './auth.service'
@@ -9,9 +8,9 @@ const loginUser = catchAsync(async (req, res) => {
   const { refreshToken, accessToken } = result
 
   res.cookie('refreshToken', refreshToken, {
-    secure: true,
+    secure: false,
     httpOnly: true,
-    sameSite: 'none',
+    sameSite: 'lax',
     maxAge: 1000 * 60 * 60 * 24 * 365,
   })
 
