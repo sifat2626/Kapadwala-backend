@@ -21,7 +21,7 @@ const loginUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void
     const result = yield auth_service_1.AuthServices.loginUser(req.body);
     const { refreshToken, accessToken } = result;
     res.cookie('refreshToken', refreshToken, {
-        secure: false,
+        secure: true,
         httpOnly: true,
         sameSite: 'lax',
         maxAge: 1000 * 60 * 60 * 24 * 365,
