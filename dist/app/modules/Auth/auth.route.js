@@ -11,8 +11,8 @@ const auth_validation_1 = require("./auth.validation");
 const router = express_1.default.Router();
 router.post('/login', (0, validateRequest_1.default)(auth_validation_1.AuthValidation.loginValidationSchema), auth_controller_1.AuthControllers.loginUser);
 router.post('/refresh-token', (0, validateRequest_1.default)(auth_validation_1.AuthValidation.refreshTokenValidationSchema), auth_controller_1.AuthControllers.refreshToken);
-// Request OTP
-router.post('/request-otp', auth_controller_1.AuthControllers.requestOtp);
-// Reset password using OTP
-router.post('/reset-password-with-otp', auth_controller_1.AuthControllers.resetPasswordWithOtp);
+// Request email verification for password reset
+router.post('/request-email-verification', auth_controller_1.AuthControllers.requestEmailVerification);
+// Verify email and reset password
+router.post('/verify-email-and-reset-password', auth_controller_1.AuthControllers.validateEmailVerificationAndResetPassword);
 exports.AuthRoutes = router;
