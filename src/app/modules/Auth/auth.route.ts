@@ -26,4 +26,16 @@ router.post(
   AuthControllers.validateEmailVerificationAndResetPassword,
 );
 
+// Request password reset
+router.post(
+  '/request-password-reset',
+  AuthControllers.requestPasswordReset,
+);
+
+// Reset password
+router.post(
+  '/reset-password',
+  AuthControllers.resetPassword,
+);
+
 export const AuthRoutes = router

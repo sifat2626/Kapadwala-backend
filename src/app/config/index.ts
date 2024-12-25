@@ -31,4 +31,5 @@ export default {
   reset_pass_ui_link: process.env.RESET_PASS_UI_LINK,
   reset_pass_ui_link_dev: process.env.RESET_PASS_UI_LINK_DEV,
   jwt_email_verification_secret:process.env.JWT_EMAIL_VERIFICATION_SECRET,
+  jwt_password_reset_secret:process.env.JWT_PASSWORD_SECRET,
 }

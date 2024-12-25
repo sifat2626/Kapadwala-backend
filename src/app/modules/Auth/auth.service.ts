@@ -5,7 +5,6 @@ import { User } from '../User/user.model'
 import { TLoginUser } from './auth.interface'
 import { createToken, verifyToken } from './auth.utils'
 import { EmailService } from '../../utils/email.service'
-import crypto from 'crypto';
 import jwt from 'jsonwebtoken'
 
 const loginUser = async (payload: TLoginUser) => {
@@ -129,9 +128,56 @@ const validateEmailVerificationAndResetPassword = async (
   }
 };
 
+const requestPasswordReset = async (email: string): Promise<void> => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new AppError(404, 'User not found!');
+  }
+
+  // Generate a password reset token
+  const resetToken = jwt.sign(
+    { email: user.email },
+    config.jwt_password_reset_secret as string,
+    { expiresIn: '15m' }, // Token expires in 15 minutes
+  );
+
+  // Send the reset token via email
+  const resetLink = `${config.client_url}/reset-password?token=${resetToken}`;
+  const subject = 'Password Reset Request';
+  const text = `Please click the link below to reset your password: ${resetLink}`;
+  const html = `<p>Please click the link below to reset your password:</p><a href="${resetLink}">${resetLink}</a>`;
+
+  await EmailService.sendEmail(user.email, subject, text, html);
+};
+
+const resetPassword = async (token: string, newPassword: string): Promise<void> => {
+  try {
+    // Verify the token
+    const decoded = jwt.verify(
+      token,
+      config.jwt_password_reset_secret as string,
+    ) as { email: string };
+
+    // Find the user
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) {
+      throw new AppError(404, 'User not found!');
+    }
+
+    // Update the user's password
+    user.password = newPassword; // The password will be hashed by the pre-save hook
+    await user.save();
+  } catch (err) {
+    throw new AppError(400, 'Invalid or expired token!');
+  }
+};
+
 export const AuthServices = {
   loginUser,
   refreshToken,
   requestEmailVerification,
-  validateEmailVerificationAndResetPassword
+  validateEmailVerificationAndResetPassword,
+  requestPasswordReset,
+  resetPassword
 }

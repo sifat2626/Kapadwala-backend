@@ -67,9 +67,31 @@ const validateEmailVerificationAndResetPassword = (0, catchAsync_1.default)((req
         data: '',
     });
 }));
+const requestPasswordReset = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    yield auth_service_1.AuthServices.requestPasswordReset(email);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Password reset email sent successfully!',
+        data: '',
+    });
+}));
+const resetPassword = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { token, newPassword } = req.body;
+    yield auth_service_1.AuthServices.resetPassword(token, newPassword);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Password reset successfully!',
+        data: '',
+    });
+}));
 exports.AuthControllers = {
     loginUser,
     refreshToken,
     requestEmailVerification,
-    validateEmailVerificationAndResetPassword
+    validateEmailVerificationAndResetPassword,
+    requestPasswordReset,
+    resetPassword
 };

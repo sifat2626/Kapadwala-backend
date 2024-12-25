@@ -66,9 +66,37 @@ const validateEmailVerificationAndResetPassword = catchAsync(
   },
 );
 
+const requestPasswordReset = catchAsync(async (req, res) => {
+  const { email } = req.body;
+
+  await AuthServices.requestPasswordReset(email);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Password reset email sent successfully!',
+    data: '',
+  });
+});
+
+const resetPassword = catchAsync(async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  await AuthServices.resetPassword(token, newPassword);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Password reset successfully!',
+    data: '',
+  });
+});
+
 export const AuthControllers = {
   loginUser,
   refreshToken,
   requestEmailVerification,
-  validateEmailVerificationAndResetPassword
+  validateEmailVerificationAndResetPassword,
+  requestPasswordReset,
+  resetPassword
 }

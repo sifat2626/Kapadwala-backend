@@ -15,4 +15,8 @@ router.post('/refresh-token', (0, validateRequest_1.default)(auth_validation_1.A
 router.post('/request-email-verification', auth_controller_1.AuthControllers.requestEmailVerification);
 // Verify email and reset password
 router.post('/verify-email-and-reset-password', auth_controller_1.AuthControllers.validateEmailVerificationAndResetPassword);
+// Request password reset
+router.post('/request-password-reset', auth_controller_1.AuthControllers.requestPasswordReset);
+// Reset password
+router.post('/reset-password', auth_controller_1.AuthControllers.resetPassword);
 exports.AuthRoutes = router;

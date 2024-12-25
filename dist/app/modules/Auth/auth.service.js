@@ -95,9 +95,42 @@ const validateEmailVerificationAndResetPassword = (token, newPassword) => __awai
         throw new AppError_1.default(400, 'Invalid or expired token!');
     }
 });
+const requestPasswordReset = (email) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield user_model_1.User.findOne({ email });
+    if (!user) {
+        throw new AppError_1.default(404, 'User not found!');
+    }
+    // Generate a password reset token
+    const resetToken = jsonwebtoken_1.default.sign({ email: user.email }, config_1.default.jwt_password_reset_secret, { expiresIn: '15m' });
+    // Send the reset token via email
+    const resetLink = `${config_1.default.client_url}/reset-password?token=${resetToken}`;
+    const subject = 'Password Reset Request';
+    const text = `Please click the link below to reset your password: ${resetLink}`;
+    const html = `<p>Please click the link below to reset your password:</p><a href="${resetLink}">${resetLink}</a>`;
+    yield email_service_1.EmailService.sendEmail(user.email, subject, text, html);
+});
+const resetPassword = (token, newPassword) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Verify the token
+        const decoded = jsonwebtoken_1.default.verify(token, config_1.default.jwt_password_reset_secret);
+        // Find the user
+        const user = yield user_model_1.User.findOne({ email: decoded.email });
+        if (!user) {
+            throw new AppError_1.default(404, 'User not found!');
+        }
+        // Update the user's password
+        user.password = newPassword; // The password will be hashed by the pre-save hook
+        yield user.save();
+    }
+    catch (err) {
+        throw new AppError_1.default(400, 'Invalid or expired token!');
+    }
+});
 exports.AuthServices = {
     loginUser,
     refreshToken,
     requestEmailVerification,
-    validateEmailVerificationAndResetPassword
+    validateEmailVerificationAndResetPassword,
+    requestPasswordReset,
+    resetPassword
 };
