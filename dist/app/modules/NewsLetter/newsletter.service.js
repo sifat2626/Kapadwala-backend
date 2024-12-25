@@ -17,7 +17,7 @@ exports.NewsletterService = {
     sendDailyNewsletter: () => __awaiter(void 0, void 0, void 0, function* () {
         // Step 1: Fetch top 10 deals
         const topDeals = yield deal_service_1.DealServices.getTopDeals();
-        const top10Deals = topDeals.slice(0, 10); // Limit to 10 deals
+        const top10Deals = topDeals.data.slice(0, 10); // Limit to 10 deals
         // Step 2: Fetch all authenticated users with active subscriptions
         const users = yield user_model_1.User.find({ isSubscribed: true }).select('email name');
         if (!users.length) {

@@ -6,7 +6,7 @@ export const NewsletterService = {
   sendDailyNewsletter: async () => {
     // Step 1: Fetch top 10 deals
     const topDeals = await DealServices.getTopDeals();
-    const top10Deals = topDeals.slice(0, 10); // Limit to 10 deals
+    const top10Deals = topDeals.data.slice(0, 10); // Limit to 10 deals
 
     // Step 2: Fetch all authenticated users with active subscriptions
     const users = await User.find({ isSubscribed: true }).select('email name');
