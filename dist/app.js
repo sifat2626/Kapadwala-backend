@@ -14,7 +14,7 @@ const payment_controller_1 = require("./app/modules/Payment/payment.controller")
 require("./app/modules/NewsLetter/newsletter.cron");
 const app = (0, express_1.default)();
 // Route to handle Stripe webhook
-app.post(`/api/v1/payments/webhook`, express_1.default.raw({ type: 'application/json' }), payment_controller_1.PaymentController.stripeWebhook);
+app.use(`/api/v1/payments/webhook`, express_1.default.raw({ type: 'application/json' }), payment_controller_1.PaymentController.stripeWebhook);
 //parsers
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());

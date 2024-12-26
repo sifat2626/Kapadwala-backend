@@ -11,7 +11,7 @@ import './app/modules/NewsLetter/newsletter.cron';
 const app: Application = express()
 
 // Route to handle Stripe webhook
-app.post(`/api/v1/payments/webhook`,express.raw({ type: 'application/json' }), PaymentController.stripeWebhook);
+app.use(`/api/v1/payments/webhook`,express.raw({ type: 'application/json' }), PaymentController.stripeWebhook);
 
 //parsers
 app.use(express.json())
