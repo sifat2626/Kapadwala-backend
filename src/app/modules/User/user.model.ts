@@ -1,8 +1,8 @@
-import { Schema, model, Types } from 'mongoose';
-import bcrypt from 'bcrypt';
-import crypto from 'crypto';
-import config from '../../config';
-import { TUser, UserModel } from './user.interface';
+import { Schema, model, Types } from 'mongoose'
+import bcrypt from 'bcrypt'
+import crypto from 'crypto'
+import config from '../../config'
+import { TUser, UserModel } from './user.interface'
 
 const userSchema = new Schema<TUser, UserModel>(
   {
@@ -46,6 +46,12 @@ const userSchema = new Schema<TUser, UserModel>(
         ref: 'Company', // References the Company model
       },
     ],
+    favoriteCreditCardVendors: [
+      {
+        type: Types.ObjectId,
+        ref: 'Vendor', // References the CreditCardVendor model
+      },
+    ],
     lastPayment: {
       amount: {
         type: Number, // Store payment amount
@@ -87,7 +93,7 @@ const userSchema = new Schema<TUser, UserModel>(
   {
     timestamps: true, // Adds createdAt and updatedAt fields
   },
-);
+)
 
 // Middleware to hash password before saving
 userSchema.pre('save', async function (next) {
@@ -95,36 +101,36 @@ userSchema.pre('save', async function (next) {
     this.password = await bcrypt.hash(
       this.password,
       Number(config.bcrypt_salt_rounds),
-    );
+    )
   }
-  next();
-});
+  next()
+})
 
 // Middleware to remove password from the saved document
 userSchema.post('save', function (doc, next) {
-  doc.password = '';
-  next();
-});
+  doc.password = ''
+  next()
+})
 
 // Static method to check if a user exists by email
 userSchema.statics.isUserExistsByEmail = async function (email: string) {
-  return User.findOne({ email }).select('+password');
-};
+  return User.findOne({ email }).select('+password')
+}
 
 // Static method to verify if the password matches
 userSchema.statics.isPasswordMatched = async function (
   plainTextPassword: string,
   hashedPassword: string,
 ) {
-  return await bcrypt.compare(plainTextPassword, hashedPassword);
-};
+  return await bcrypt.compare(plainTextPassword, hashedPassword)
+}
 
 // Instance method to generate and hash an OTP
 userSchema.methods.generateOtp = function () {
-  const otp = crypto.randomInt(100000, 999999).toString(); // Generate a 6-digit OTP
-  this.otp = crypto.createHash('sha256').update(otp).digest('hex'); // Hash the OTP for security
-  this.otpExpires = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
-  return otp; // Return the plain OTP for sending
-};
+  const otp = crypto.randomInt(100000, 999999).toString() // Generate a 6-digit OTP
+  this.otp = crypto.createHash('sha256').update(otp).digest('hex') // Hash the OTP for security
+  this.otpExpires = Date.now() + 10 * 60 * 1000 // OTP valid for 10 minutes
+  return otp // Return the plain OTP for sending
+}
 
-export const User = model<TUser, UserModel>('User', userSchema);
+export const User = model<TUser, UserModel>('User', userSchema)

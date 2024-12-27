@@ -239,9 +239,17 @@ const getTopDeals = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
         .limit(limit);
     // Total count for pagination meta
     const total = companyIds.length;
-    // Combine results
+    // Combine results and calculate stackingLevel per company
     const data = companies.map((company) => {
         const companyId = company._id.toString();
+        // Calculate stacking level for the current company
+        let stackingLevel = 0;
+        if (cashbackMap.has(companyId))
+            stackingLevel++;
+        if (giftcardMap.has(companyId))
+            stackingLevel++;
+        if (creditCardMap.has(companyId))
+            stackingLevel++;
         return {
             company: {
                 id: companyId,
@@ -252,6 +260,7 @@ const getTopDeals = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
             bestCashbackDeal: cashbackMap.get(companyId) || null,
             bestGiftcardDeal: giftcardMap.get(companyId) || null,
             creditCardDeals: creditCardMap.get(companyId) || [],
+            stackingLevel, // Stacking level specific to this company
         };
     });
     // Return with meta

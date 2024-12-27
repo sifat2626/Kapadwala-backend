@@ -58,6 +58,12 @@ const userSchema = new mongoose_1.Schema({
             ref: 'Company', // References the Company model
         },
     ],
+    favoriteCreditCardVendors: [
+        {
+            type: mongoose_1.Types.ObjectId,
+            ref: 'Vendor', // References the CreditCardVendor model
+        },
+    ],
     lastPayment: {
         amount: {
             type: Number, // Store payment amount
