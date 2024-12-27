@@ -196,9 +196,7 @@ const stripeWebhook = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
             data: null,
         });
     }
-    const stripe = new stripe_1.default(config_1.default.stripe_secret_key, {
-        apiVersion: '2024-11-20.acacia',
-    });
+    const stripe = new stripe_1.default(config_1.default.stripe_secret_key);
     let event;
     try {
         event = stripe.webhooks.constructEvent(req.body, // Raw body
