@@ -17,6 +17,7 @@ const http_status_1 = __importDefault(require("http-status"));
 const catchAsync_1 = __importDefault(require("../../utils/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../utils/sendResponse"));
 const deal_service_1 = require("./deal.service");
+const user_model_1 = require("../User/user.model");
 // Upload and process deals from a CSV file
 const uploadDealsFromCSV = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.file) {
@@ -163,6 +164,58 @@ const getAllCreditcardDeals = (0, catchAsync_1.default)((req, res) => __awaiter(
         data: deals,
     });
 }));
+const getTopDealsFromFavorites = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+    if (!userId) {
+        return (0, sendResponse_1.default)(res, {
+            statusCode: http_status_1.default.UNAUTHORIZED,
+            success: false,
+            message: 'User is not authenticated.',
+            data: null,
+        });
+    }
+    // Fetch the user's favorite companies
+    const user = yield user_model_1.User.findById(userId).populate('favorites', '_id');
+    if (!user || user.favorites.length === 0) {
+        return (0, sendResponse_1.default)(res, {
+            statusCode: http_status_1.default.OK,
+            success: true,
+            message: 'No favorite companies found for the user.',
+            data: [],
+        });
+    }
+    // Get all top deals
+    const allTopDeals = yield deal_service_1.DealServices.getTopDeals();
+    // Extract favorite company IDs
+    const favoriteCompanyIds = user.favorites.map((favorite) => favorite._id.toString());
+    // Filter top deals by favorite company IDs
+    const filteredDeals = allTopDeals.data.filter((deal) => favoriteCompanyIds.includes(deal.company.id.toString()));
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Top deals from favorite companies retrieved successfully.',
+        data: filteredDeals,
+    });
+}));
+// const getTopDealsFromFavorites: RequestHandler = catchAsync(async (req, res) => {
+//   const userId = req.user?._id;
+//   if (!userId) {
+//     return sendResponse(res, {
+//       statusCode: httpStatus.UNAUTHORIZED,
+//       success: false,
+//       message: 'User is not authenticated.',
+//       data: null,
+//     });
+//   }
+//   const topDeals = await DealServices.getTopDealsFromFavorites(userId);
+//   sendResponse(res, {
+//     statusCode: httpStatus.OK,
+//     success: true,
+//     message: 'Top deals from favorite companies retrieved successfully.',
+//     data: topDeals,
+//   });
+// });
 exports.DealControllers = {
     uploadDealsFromCSV,
     getAllActiveDeals,
@@ -176,4 +229,5 @@ exports.DealControllers = {
     getExpiringCreditcardDealsByVendor,
     deleteOldDeals,
     getAllCreditcardDeals,
+    getTopDealsFromFavorites,
 };

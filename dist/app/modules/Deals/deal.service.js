@@ -47,9 +47,14 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
     existingCompanies.forEach((company) => companyMap.set(company.name, company._id));
     existingVendors.forEach((vendor) => vendorMap.set(vendor.name, vendor._id));
     for (const deal of deals) {
-        const { title, percentage = 0, type, vendorName, companyName, expiryDate, link } = deal;
+        const { title, percentage = 0, type, vendorName, companyName, expiryDate, link, } = deal;
         // Validate mandatory fields
-        if (!title || !type || !vendorName || !companyName || !expiryDate || !link) {
+        if (!title ||
+            !type ||
+            !vendorName ||
+            !companyName ||
+            !expiryDate ||
+            !link) {
             invalidDeals.push(deal);
             continue;
         }
@@ -75,14 +80,22 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
         }
         let companyId = companyMap.get(companyName);
         if (!companyId) {
-            const newCompany = yield company_model_1.Company.create({ name: companyName, logo: '', website: '' });
+            const newCompany = yield company_model_1.Company.create({
+                name: companyName,
+                logo: '',
+                website: '',
+            });
             companyId = newCompany._id;
             companyMap.set(companyName, companyId);
             results.newCompanies++;
         }
         let vendorId = vendorMap.get(vendorName);
         if (!vendorId) {
-            const newVendor = yield vendor_model_1.Vendor.create({ name: vendorName, logo: '', website: '' });
+            const newVendor = yield vendor_model_1.Vendor.create({
+                name: vendorName,
+                logo: '',
+                website: '',
+            });
             vendorId = newVendor._id;
             vendorMap.set(vendorName, vendorId);
             results.newVendors++;
@@ -167,13 +180,25 @@ const getTopDeals = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
     const skip = (page - 1) * limit;
     // Fetch the best non-expired cashback deals
     const cashbackDeals = yield deals_model_1.Deal.aggregate([
-        { $match: { type: 'cashback', isActive: true, expiryDate: { $gte: currentDate } } },
+        {
+            $match: {
+                type: 'cashback',
+                isActive: true,
+                expiryDate: { $gte: currentDate },
+            },
+        },
         { $sort: { percentage: -1 } },
         { $group: { _id: '$companyId', bestCashbackDeal: { $first: '$$ROOT' } } },
     ]);
     // Fetch the best non-expired gift card deals
     const giftcardDeals = yield deals_model_1.Deal.aggregate([
-        { $match: { type: 'giftcard', isActive: true, expiryDate: { $gte: currentDate } } },
+        {
+            $match: {
+                type: 'giftcard',
+                isActive: true,
+                expiryDate: { $gte: currentDate },
+            },
+        },
         { $sort: { percentage: -1 } },
         { $group: { _id: '$companyId', bestGiftcardDeal: { $first: '$$ROOT' } } },
     ]);
@@ -182,8 +207,7 @@ const getTopDeals = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
         type: 'creditcard',
         isActive: true,
         expiryDate: { $gte: currentDate }, // Only fetch non-expired deals
-    })
-        .populate('vendorId', 'name logo website'); // Populate vendor details
+    }).populate('vendorId', 'name logo website'); // Populate vendor details
     // Maps for efficient grouping
     const cashbackMap = new Map();
     const giftcardMap = new Map();
@@ -203,7 +227,13 @@ const getTopDeals = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
         });
     });
     // Fetch all company details for unique companyIds
-    const companyIds = [...new Set([...cashbackMap.keys(), ...giftcardMap.keys(), ...creditCardMap.keys()])];
+    const companyIds = [
+        ...new Set([
+            ...cashbackMap.keys(),
+            ...giftcardMap.keys(),
+            ...creditCardMap.keys(),
+        ]),
+    ];
     const companies = yield company_model_1.Company.find({ _id: { $in: companyIds } })
         .skip(skip)
         .limit(limit);
@@ -213,7 +243,12 @@ const getTopDeals = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
     const data = companies.map((company) => {
         const companyId = company._id.toString();
         return {
-            company: { id: companyId, name: company.name },
+            company: {
+                id: companyId,
+                name: company.name,
+                logo: company.logo,
+                website: company.website,
+            },
             bestCashbackDeal: cashbackMap.get(companyId) || null,
             bestGiftcardDeal: giftcardMap.get(companyId) || null,
             creditCardDeals: creditCardMap.get(companyId) || [],
@@ -243,7 +278,9 @@ const getBestCashbackRateByCompany = (companyName_1, ...args_1) => __awaiter(voi
         { $match: { 'company.name': companyName } }, // Filter by company name
         {
             $group: {
-                _id: { date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } } },
+                _id: {
+                    date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                },
                 bestCashbackRate: { $max: '$percentage' }, // Get the max cashback rate for each date
             },
         },
@@ -270,7 +307,9 @@ const getBestCashbackRateByCompany = (companyName_1, ...args_1) => __awaiter(voi
         { $match: { 'company.name': companyName } },
         {
             $group: {
-                _id: { date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } } },
+                _id: {
+                    date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                },
                 bestCashbackRate: { $max: '$percentage' },
             },
         },
@@ -313,7 +352,9 @@ const getBestGiftcardRateByCompany = (companyName_1, ...args_1) => __awaiter(voi
         { $match: { 'company.name': companyName } }, // Filter by company name
         {
             $group: {
-                _id: { date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } } },
+                _id: {
+                    date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                },
                 bestGiftcardRate: { $max: '$percentage' }, // Get the max gift card rate for each date
             },
         },
@@ -340,7 +381,9 @@ const getBestGiftcardRateByCompany = (companyName_1, ...args_1) => __awaiter(voi
         { $match: { 'company.name': companyName } },
         {
             $group: {
-                _id: { date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } } },
+                _id: {
+                    date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                },
                 bestGiftcardRate: { $max: '$percentage' },
             },
         },
@@ -526,6 +569,85 @@ const getAllCreditcardDeals = (query) => __awaiter(void 0, void 0, void 0, funct
     const total = yield deals_model_1.Deal.countDocuments(filters);
     return (0, returnWithMeta_1.returnWithMeta)({ total, limit: Number(limit), page: Number(page) }, deals);
 });
+// const getTopDealsFromFavorites = async (userId: string) => {
+//   try {
+//     // Find the user and their favorite companies
+//     const user = await User.findById(userId).populate('favorites', '_id name')
+//     if (!user || !user.favorites || user.favorites.length === 0) {
+//       return []
+//     }
+//     // Extract favorite company IDs
+//     const favoriteCompanyIds = user.favorites.map((favorite) =>
+//       favorite._id.toString(),
+//     )
+//     console.log('Favorite Company IDs:', favoriteCompanyIds[0])
+//     // Ensure that `favoriteCompanyIds` contains valid ObjectIds
+//     const currentDate = new Date()
+//     // Fetch top deals for favorite companies
+//     const topDeals = await Deal.aggregate([
+//       {
+//         $match: {
+//           companyId: favoriteCompanyIds[0].toString(), // Filter deals only for favorite companies
+//           isActive: true, // Ensure deals are active
+//           expiryDate: { $gte: currentDate }, // Ensure deals are not expired
+//         },
+//       },
+//       {
+//         $sort: { percentage: -1 }, // Sort by percentage in descending order
+//       },
+//       {
+//         $group: {
+//           _id: '$companyId', // Group by company
+//           topDeal: { $first: '$$ROOT' }, // Take the first (top) deal
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: 'companies', // Join with the companies collection
+//           localField: '_id',
+//           foreignField: '_id',
+//           as: 'company',
+//         },
+//       },
+//       {
+//         $unwind: '$company', // Flatten the company array
+//       },
+//       {
+//         $lookup: {
+//           from: 'vendors', // Join with the vendors collection
+//           localField: 'topDeal.vendorId',
+//           foreignField: '_id',
+//           as: 'vendor',
+//         },
+//       },
+//       {
+//         $unwind: { path: '$vendor', preserveNullAndEmptyArrays: true }, // Flatten vendor array
+//       },
+//       {
+//         $project: {
+//           _id: 0,
+//           company: { _id: '$company._id', name: '$company.name' },
+//           deal: {
+//             title: '$topDeal.title',
+//             percentage: '$topDeal.percentage',
+//             type: '$topDeal.type',
+//             link: '$topDeal.link',
+//             expiryDate: '$topDeal.expiryDate',
+//           },
+//           vendor: {
+//             _id: '$vendor._id',
+//             name: '$vendor.name',
+//             logo: '$vendor.logo',
+//           },
+//         },
+//       },
+//     ])
+//     return topDeals
+//   } catch (error) {
+//     console.error('Error fetching top deals from favorites:', error)
+//     throw new Error('Failed to fetch top deals from favorite companies.')
+//   }
+// }
 exports.DealServices = {
     getAllDeals,
     getAllActiveDeals,
@@ -538,5 +660,6 @@ exports.DealServices = {
     getTopDeals,
     processCSVData,
     deleteOldDeals,
-    getAllCreditcardDeals
+    getAllCreditcardDeals,
+    // getTopDealsFromFavorites,
 };
