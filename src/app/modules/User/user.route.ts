@@ -5,6 +5,7 @@ import { USER_ROLE } from './user.constant'
 import { UserControllers } from './user.controller'
 import { UserValidation } from './user.validation'
 import protect from '../../middlewares/protect'
+import checkSubscription from '../../middlewares/limitUnSubscribedUser'
 
 const router = express.Router()
 
@@ -35,6 +36,22 @@ router.patch(
   '/:id/subscribe',
   auth(USER_ROLE.admin, USER_ROLE.superAdmin),
   UserControllers.subscribeUser,
+)
+
+// Route to subscribe to the newsletter
+router.post(
+  '/newsletter/subscribe',
+  protect(),
+  checkSubscription(),
+  UserControllers.subscribeToNewsletter,
+)
+
+// Route to unsubscribe from the newsletter
+router.delete(
+  '/newsletter/unsubscribe',
+  protect(),
+  checkSubscription(),
+  UserControllers.unsubscribeFromNewsletter,
 )
 
 // Route to add a favorite company

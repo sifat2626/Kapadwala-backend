@@ -52,6 +52,24 @@ const subscribeUser = (id) => __awaiter(void 0, void 0, void 0, function* () {
     yield user.save();
     return user;
 });
+const subscribeToNewsletter = (userId, email) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield user_model_1.User.findById(userId);
+    if (!user)
+        throw new Error('User not found');
+    user.isSubscribedToNewsletter = true;
+    user.newsLetterEmail = email;
+    yield user.save();
+    return user;
+});
+const unsubscribeFromNewsletter = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield user_model_1.User.findById(userId);
+    if (!user)
+        throw new Error('User not found');
+    user.isSubscribedToNewsletter = false;
+    user.newsLetterEmail = '';
+    yield user.save();
+    return user;
+});
 const addFavoriteCompany = (userId, companyId) => __awaiter(void 0, void 0, void 0, function* () {
     const company = yield company_model_1.Company.findById(companyId);
     if (!company)
@@ -133,6 +151,8 @@ exports.UserServices = {
     updateUserRoleIntoDB,
     deleteUserIntoDB,
     subscribeUser,
+    subscribeToNewsletter,
+    unsubscribeFromNewsletter,
     addFavoriteCompany,
     addFavoriteCreditCardVendor,
     removeFavoriteCompany,

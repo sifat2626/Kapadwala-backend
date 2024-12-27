@@ -154,6 +154,29 @@ const getAllFavoriteCreditCardVendors = (0, catchAsync_1.default)((req, res) => 
         data: result.data,
     });
 }));
+// Subscribe a user to the newsletter
+const subscribeToNewsletter = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.user._id;
+    const { email } = req.body;
+    const result = yield user_service_1.UserServices.subscribeToNewsletter(userId, email);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Subscribed to newsletter successfully.',
+        data: result,
+    });
+}));
+// Unsubscribe a user from the newsletter
+const unsubscribeFromNewsletter = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.user._id;
+    const result = yield user_service_1.UserServices.unsubscribeFromNewsletter(userId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Unsubscribed from newsletter successfully.',
+        data: result,
+    });
+}));
 exports.UserControllers = {
     createUser,
     getAllUsers,
@@ -167,4 +190,6 @@ exports.UserControllers = {
     addFavoriteCreditCardVendor,
     removeFavoriteCreditCardVendor,
     getAllFavoriteCreditCardVendors,
+    subscribeToNewsletter,
+    unsubscribeFromNewsletter,
 };

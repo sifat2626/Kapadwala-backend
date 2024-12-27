@@ -11,6 +11,7 @@ const user_constant_1 = require("./user.constant");
 const user_controller_1 = require("./user.controller");
 const user_validation_1 = require("./user.validation");
 const protect_1 = __importDefault(require("../../middlewares/protect"));
+const limitUnSubscribedUser_1 = __importDefault(require("../../middlewares/limitUnSubscribedUser"));
 const router = express_1.default.Router();
 // Route for creating a new user
 router.post('/create', (0, validateRequest_1.default)(user_validation_1.UserValidation.userValidationSchema), user_controller_1.UserControllers.createUser);
@@ -20,6 +21,10 @@ router.patch('/:id/change-role', (0, auth_1.default)(user_constant_1.USER_ROLE.a
 router.delete('/:id/delete', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), user_controller_1.UserControllers.deleteUser);
 // Route for subscribing a user
 router.patch('/:id/subscribe', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), user_controller_1.UserControllers.subscribeUser);
+// Route to subscribe to the newsletter
+router.post('/newsletter/subscribe', (0, protect_1.default)(), (0, limitUnSubscribedUser_1.default)(), user_controller_1.UserControllers.subscribeToNewsletter);
+// Route to unsubscribe from the newsletter
+router.delete('/newsletter/unsubscribe', (0, protect_1.default)(), (0, limitUnSubscribedUser_1.default)(), user_controller_1.UserControllers.unsubscribeFromNewsletter);
 // Route to add a favorite company
 router.post('/favorites/:companyId/add', (0, protect_1.default)(), user_controller_1.UserControllers.addFavoriteCompany);
 // Route to remove a favorite company

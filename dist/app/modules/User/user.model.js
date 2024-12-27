@@ -94,6 +94,21 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         default: null, // Stores Stripe Subscription ID
     },
+    isSubscribedToNewsletter: {
+        type: Boolean,
+        default: false, // Indicates if the user is subscribed to the newsletter
+    },
+    newsLetterEmail: {
+        type: String,
+        default: '', // Email used for newsletter subscription
+        validate: {
+            validator: function (email) {
+                // Validate only if the field is not empty
+                return !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            },
+            message: 'Invalid email format for newsletter subscription.',
+        },
+    },
     otp: {
         type: String, // Store the OTP securely (e.g., hashed)
         select: false,

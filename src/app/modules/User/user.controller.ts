@@ -190,6 +190,37 @@ const getAllFavoriteCreditCardVendors: RequestHandler = catchAsync(
   },
 )
 
+// Subscribe a user to the newsletter
+const subscribeToNewsletter: RequestHandler = catchAsync(async (req, res) => {
+  const userId = req.user._id
+  const { email } = req.body
+
+  const result = await UserServices.subscribeToNewsletter(userId, email)
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Subscribed to newsletter successfully.',
+    data: result,
+  })
+})
+
+// Unsubscribe a user from the newsletter
+const unsubscribeFromNewsletter: RequestHandler = catchAsync(
+  async (req, res) => {
+    const userId = req.user._id
+
+    const result = await UserServices.unsubscribeFromNewsletter(userId)
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Unsubscribed from newsletter successfully.',
+      data: result,
+    })
+  },
+)
+
 export const UserControllers = {
   createUser,
   getAllUsers,
@@ -203,4 +234,6 @@ export const UserControllers = {
   addFavoriteCreditCardVendor,
   removeFavoriteCreditCardVendor,
   getAllFavoriteCreditCardVendors,
+  subscribeToNewsletter,
+  unsubscribeFromNewsletter,
 }

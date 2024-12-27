@@ -16,6 +16,8 @@ export interface TUser {
   stripeSubscriptionId?: string | null // Stripe Subscription ID
   favorites: Types.ObjectId[] // Array of references to Company IDs
   favoriteCreditCardVendors: Types.ObjectId[] // Array of references
+  isSubscribedToNewsletter: boolean // Tracks if the user is subscribed to the newsletter
+  newsLetterEmail: string // Email for the newsletter
   lastPayment?: {
     amount: number // Payment amount
     currency: string // Payment currency (e.g., 'usd')

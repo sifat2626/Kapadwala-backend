@@ -54,6 +54,33 @@ const subscribeUser = async (id: string): Promise<TUser | null> => {
   return user
 }
 
+const subscribeToNewsletter = async (
+  userId: string,
+  email: string,
+): Promise<TUser | null> => {
+  const user = await User.findById(userId)
+  if (!user) throw new Error('User not found')
+
+  user.isSubscribedToNewsletter = true
+  user.newsLetterEmail = email
+  await user.save()
+
+  return user
+}
+
+const unsubscribeFromNewsletter = async (
+  userId: string,
+): Promise<TUser | null> => {
+  const user = await User.findById(userId)
+  if (!user) throw new Error('User not found')
+
+  user.isSubscribedToNewsletter = false
+  user.newsLetterEmail = ''
+  await user.save()
+
+  return user
+}
+
 const addFavoriteCompany = async (userId: string, companyId: string) => {
   const company = await Company.findById(companyId)
   if (!company) throw new Error('Company not found')
@@ -176,6 +203,8 @@ export const UserServices = {
   updateUserRoleIntoDB,
   deleteUserIntoDB,
   subscribeUser,
+  subscribeToNewsletter,
+  unsubscribeFromNewsletter,
   addFavoriteCompany,
   addFavoriteCreditCardVendor,
   removeFavoriteCompany,

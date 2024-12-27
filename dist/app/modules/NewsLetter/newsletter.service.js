@@ -18,63 +18,72 @@ exports.NewsletterService = {
         // Step 1: Fetch top 10 deals
         const topDeals = yield deal_service_1.DealServices.getTopDeals();
         const top10Deals = topDeals.data.slice(0, 10); // Limit to 10 deals
-        // Step 2: Fetch all authenticated users with active subscriptions
-        const users = yield user_model_1.User.find({ isSubscribed: true }).select('email name');
-        if (!users.length) {
-            console.log('No subscribed users found.');
+        // Step 2: Fetch all users who are subscribed to the newsletter
+        const newsletterSubscribers = yield user_model_1.User.find({
+            isSubscribedToNewsletter: true, // Ensure they are subscribed to the newsletter
+        }).select('newsLetterEmail name favoriteCreditCardVendors');
+        if (!newsletterSubscribers.length) {
+            console.log('No newsletter subscribers found.');
             return;
         }
-        // Step 3: Prepare the newsletter content
-        const dealsHtml = top10Deals
-            .map((deal) => {
-            const cashback = deal.bestCashbackDeal
-                ? `<li><strong>Cashback:</strong> ${deal.bestCashbackDeal.title} (${deal.bestCashbackDeal.percentage}% off)
-              <br/> <a href="${deal.bestCashbackDeal.link}" target="_blank">View Cashback Deal</a>
-            </li>`
-                : '';
-            const giftcard = deal.bestGiftcardDeal
-                ? `<li><strong>Gift Card:</strong> ${deal.bestGiftcardDeal.title} (${deal.bestGiftcardDeal.percentage}% off)
-              <br/> <a href="${deal.bestGiftcardDeal.link}" target="_blank">View Gift Card Deal</a>
-            </li>`
-                : '';
-            const creditCards = deal.creditCardDeals.length
-                ? deal.creditCardDeals
-                    .map((creditDeal) => {
-                    var _a;
-                    return `
-                  <li><strong>Credit Card:</strong> ${((_a = creditDeal.vendor) === null || _a === void 0 ? void 0 : _a.name) || 'N/A'} - ${creditDeal.title}
+        // Step 3: Prepare and send the newsletter for each subscriber
+        for (const subscriber of newsletterSubscribers) {
+            const { favoriteCreditCardVendors, newsLetterEmail } = subscriber;
+            // Filter credit card deals based on the subscriber's favorite vendors
+            const personalizedDeals = top10Deals.map((deal) => {
+                const filteredCreditCardDeals = deal.creditCardDeals.filter((creditDeal) => {
+                    var _a, _b;
+                    return favoriteCreditCardVendors.includes((_b = (_a = creditDeal.vendor) === null || _a === void 0 ? void 0 : _a._id) === null || _b === void 0 ? void 0 : _b.toString());
+                });
+                return Object.assign(Object.assign({}, deal), { creditCardDeals: filteredCreditCardDeals });
+            });
+            // Generate HTML content for the deals
+            const dealsHtml = personalizedDeals
+                .map((deal) => {
+                const cashback = deal.bestCashbackDeal
+                    ? `<li><strong>Cashback:</strong> ${deal.bestCashbackDeal.title} (${deal.bestCashbackDeal.percentage}% off)
+                <br/> <a href="${deal.bestCashbackDeal.link}" target="_blank">View Cashback Deal</a>
+              </li>`
+                    : '';
+                const giftcard = deal.bestGiftcardDeal
+                    ? `<li><strong>Gift Card:</strong> ${deal.bestGiftcardDeal.title} (${deal.bestGiftcardDeal.percentage}% off)
+                <br/> <a href="${deal.bestGiftcardDeal.link}" target="_blank">View Gift Card Deal</a>
+              </li>`
+                    : '';
+                const creditCards = deal.creditCardDeals.length
+                    ? deal.creditCardDeals
+                        .map((creditDeal) => {
+                        var _a;
+                        return ` <li><strong>Credit Card:</strong> ${((_a = creditDeal.vendor) === null || _a === void 0 ? void 0 : _a.name) || 'N/A'} - ${creditDeal.title}
                     <br/> <a href="${creditDeal.link}" target="_blank">View Credit Card Deal</a>
-                  </li>`;
-                })
-                    .join('')
-                : '<li>No active credit card deals</li>';
-            return `
-          <h2>${deal.company.name}</h2>
-          <ul>
-            ${cashback}
-            ${giftcard}
-            ${creditCards}
-          </ul>
-        `;
-        })
-            .join('');
-        const emailHtml = `
-      <h1>Top 10 Deals of the Day</h1>
-      ${dealsHtml}
-      <p>Thank you for subscribing to our newsletter!</p>
-    `;
-        // Step 4: Send emails to each user
-        for (const user of users) {
-            const subject = 'Your Daily Top Deals!';
+                    </li>`;
+                    })
+                        .join('')
+                    : '<li>No active credit card deals</li>';
+                return `
+            <h2>${deal.company.name}</h2>
+            <ul>
+              ${cashback}
+              ${giftcard}
+              ${creditCards}
+            </ul>
+          `;
+            })
+                .join('');
+            const emailHtml = `
+        <h1>Top 10 Deals of the Day</h1>
+        ${dealsHtml}
+        <p>Thank you for subscribing to our newsletter!</p>
+      `;
+            // Step 4: Send email to the subscriber
+            const subject = 'Your Personalized Daily Top Deals!';
             const text = 'Check out the top deals of the day!';
             try {
-                yield email_service_1.EmailService.sendEmail(user.email, subject, text, emailHtml);
-                console.log(`Newsletter sent to ${user.email}`);
+                yield email_service_1.EmailService.sendEmail(newsLetterEmail, subject, text, emailHtml);
+                console.log(`Newsletter sent to ${newsLetterEmail}`);
             }
             catch (error) {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error
-                console.error(`Failed to send email to ${user.email}:`, error.message);
+                console.error(`Failed to send email to ${newsLetterEmail}:`, error.message);
             }
         }
     }),

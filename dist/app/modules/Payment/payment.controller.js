@@ -187,6 +187,7 @@ const cancelSubscription = (0, catchAsync_1.default)((req, res) => __awaiter(voi
 // Handle Stripe webhook
 const stripeWebhook = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const sig = req.headers['stripe-signature'];
+    console.log(req.headers);
     if (!sig) {
         return (0, sendResponse_1.default)(res, {
             statusCode: http_status_1.default.BAD_REQUEST,
@@ -201,8 +202,7 @@ const stripeWebhook = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
     let event;
     try {
         event = stripe.webhooks.constructEvent(req.body, // Raw body
-        sig, config_1.default.stripe_webhook_secret // Webhook secret
-        );
+        sig, config_1.default.stripe_webhook_secret);
         console.log(`Webhook Verified: ${event.type}`);
     }
     catch (error) {
