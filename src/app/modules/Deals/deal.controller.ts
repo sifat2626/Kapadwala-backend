@@ -219,8 +219,10 @@ const getTopDealsFromFavorites: RequestHandler = catchAsync(
       })
     }
 
-    // Fetch the user's favorite companies
-    const user = await User.findById(userId).populate('favorites', '_id')
+    // Fetch the user's favorite companies and credit card vendors
+    const user = await User.findById(userId)
+      .populate('favorites', '_id')
+      .populate('favoriteCreditCardVendors', '_id')
     if (!user || user.favorites.length === 0) {
       return sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -233,15 +235,38 @@ const getTopDealsFromFavorites: RequestHandler = catchAsync(
     // Get all top deals
     const allTopDeals = await DealServices.getTopDeals()
 
-    // Extract favorite company IDs
+    // Extract favorite company and vendor IDs
     const favoriteCompanyIds = user.favorites.map((favorite: any) =>
       favorite._id.toString(),
     )
+    const favoriteCreditCardVendorIds = user.favoriteCreditCardVendors.map(
+      (vendor: any) => vendor._id.toString(),
+    )
 
     // Filter top deals by favorite company IDs
-    const filteredDeals = allTopDeals.data.filter((deal: any) =>
-      favoriteCompanyIds.includes(deal.company.id.toString()),
-    )
+    const filteredDeals = allTopDeals.data
+      .map((deal: any) => {
+        // Filter credit card deals to include only those from favorite vendors
+        const filteredCreditCardDeals = deal.creditCardDeals.filter(
+          (creditCardDeal: any) =>
+            favoriteCreditCardVendorIds.includes(
+              creditCardDeal.vendor._id.toString(),
+            ),
+        )
+
+        // Return the deal with the filtered credit card deals
+        return {
+          ...deal,
+          creditCardDeals: filteredCreditCardDeals,
+        }
+      })
+      .filter((deal: any) => {
+        // Ensure the company is in the user's favorite companies
+        return (
+          favoriteCompanyIds.includes(deal.company.id.toString()) ||
+          deal.creditCardDeals.length > 0
+        ) // Include only if there are valid credit card deals
+      })
 
     sendResponse(res, {
       statusCode: httpStatus.OK,

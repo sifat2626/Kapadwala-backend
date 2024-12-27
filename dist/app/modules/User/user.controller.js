@@ -87,19 +87,23 @@ const addFavoriteCompany = (0, catchAsync_1.default)((req, res) => __awaiter(voi
     const userId = req.user._id;
     const { companyId } = req.params;
     const user = yield user_service_1.UserServices.addFavoriteCompany(userId, companyId);
-    if (!user) {
-        return (0, sendResponse_1.default)(res, {
-            statusCode: http_status_1.default.NOT_FOUND,
-            success: false,
-            message: 'User not found.',
-            data: null,
-        });
-    }
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Company added to favorites successfully.',
-        data: user.favorites,
+        data: (user === null || user === void 0 ? void 0 : user.favorites) || [],
+    });
+}));
+// Add a credit card vendor to the user's favorites
+const addFavoriteCreditCardVendor = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.user._id;
+    const { vendorId } = req.params;
+    const user = yield user_service_1.UserServices.addFavoriteCreditCardVendor(userId, vendorId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Vendor added to favorites successfully.',
+        data: (user === null || user === void 0 ? void 0 : user.favoriteCreditCardVendors) || [],
     });
 }));
 // Remove a company from the user's favorites
@@ -107,19 +111,23 @@ const removeFavoriteCompany = (0, catchAsync_1.default)((req, res) => __awaiter(
     const userId = req.user._id;
     const { companyId } = req.params;
     const user = yield user_service_1.UserServices.removeFavoriteCompany(userId, companyId);
-    if (!user) {
-        return (0, sendResponse_1.default)(res, {
-            statusCode: http_status_1.default.NOT_FOUND,
-            success: false,
-            message: 'User not found.',
-            data: null,
-        });
-    }
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Company removed from favorites successfully.',
-        data: user.favorites,
+        data: (user === null || user === void 0 ? void 0 : user.favorites) || [],
+    });
+}));
+// Remove a credit card vendor from the user's favorites
+const removeFavoriteCreditCardVendor = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.user._id;
+    const { vendorId } = req.params;
+    const user = yield user_service_1.UserServices.removeFavoriteCreditCardVendor(userId, vendorId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Vendor removed from favorites successfully.',
+        data: (user === null || user === void 0 ? void 0 : user.favoriteCreditCardVendors) || [],
     });
 }));
 // Get all favorite companies for the logged-in user
@@ -130,7 +138,19 @@ const getAllFavoriteCompanies = (0, catchAsync_1.default)((req, res) => __awaite
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Favorite companies retrieved successfully.',
-        meta: result.meta, // Include meta information
+        meta: result.meta,
+        data: result.data,
+    });
+}));
+// Get all favorite credit card vendors for the logged-in user
+const getAllFavoriteCreditCardVendors = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.user._id;
+    const result = yield user_service_1.UserServices.getAllFavoriteCreditCardVendors(userId, req.query);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Favorite credit card vendors retrieved successfully.',
+        meta: result.meta,
         data: result.data,
     });
 }));
@@ -144,4 +164,7 @@ exports.UserControllers = {
     addFavoriteCompany,
     removeFavoriteCompany,
     getAllFavoriteCompanies,
+    addFavoriteCreditCardVendor,
+    removeFavoriteCreditCardVendor,
+    getAllFavoriteCreditCardVendors,
 };

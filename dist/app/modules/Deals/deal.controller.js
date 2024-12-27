@@ -175,8 +175,10 @@ const getTopDealsFromFavorites = (0, catchAsync_1.default)((req, res) => __await
             data: null,
         });
     }
-    // Fetch the user's favorite companies
-    const user = yield user_model_1.User.findById(userId).populate('favorites', '_id');
+    // Fetch the user's favorite companies and credit card vendors
+    const user = yield user_model_1.User.findById(userId)
+        .populate('favorites', '_id')
+        .populate('favoriteCreditCardVendors', '_id');
     if (!user || user.favorites.length === 0) {
         return (0, sendResponse_1.default)(res, {
             statusCode: http_status_1.default.OK,
@@ -187,10 +189,22 @@ const getTopDealsFromFavorites = (0, catchAsync_1.default)((req, res) => __await
     }
     // Get all top deals
     const allTopDeals = yield deal_service_1.DealServices.getTopDeals();
-    // Extract favorite company IDs
+    // Extract favorite company and vendor IDs
     const favoriteCompanyIds = user.favorites.map((favorite) => favorite._id.toString());
+    const favoriteCreditCardVendorIds = user.favoriteCreditCardVendors.map((vendor) => vendor._id.toString());
     // Filter top deals by favorite company IDs
-    const filteredDeals = allTopDeals.data.filter((deal) => favoriteCompanyIds.includes(deal.company.id.toString()));
+    const filteredDeals = allTopDeals.data
+        .map((deal) => {
+        // Filter credit card deals to include only those from favorite vendors
+        const filteredCreditCardDeals = deal.creditCardDeals.filter((creditCardDeal) => favoriteCreditCardVendorIds.includes(creditCardDeal.vendor._id.toString()));
+        // Return the deal with the filtered credit card deals
+        return Object.assign(Object.assign({}, deal), { creditCardDeals: filteredCreditCardDeals });
+    })
+        .filter((deal) => {
+        // Ensure the company is in the user's favorite companies
+        return (favoriteCompanyIds.includes(deal.company.id.toString()) ||
+            deal.creditCardDeals.length > 0); // Include only if there are valid credit card deals
+    });
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,

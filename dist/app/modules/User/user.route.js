@@ -13,19 +13,27 @@ const user_validation_1 = require("./user.validation");
 const protect_1 = __importDefault(require("../../middlewares/protect"));
 const router = express_1.default.Router();
 // Route for creating a new user
-router.post('/create-user', 
-// auth(USER_ROLE.admin),
-(0, validateRequest_1.default)(user_validation_1.UserValidation.userValidationSchema), user_controller_1.UserControllers.createUser);
+router.post('/create', (0, validateRequest_1.default)(user_validation_1.UserValidation.userValidationSchema), user_controller_1.UserControllers.createUser);
 // Route for changing a user's role
-router.patch('/change-role/:id', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), (0, validateRequest_1.default)(user_validation_1.UserValidation.updateUserRoleValidationSchema), user_controller_1.UserControllers.updateUserRole);
+router.patch('/:id/change-role', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), (0, validateRequest_1.default)(user_validation_1.UserValidation.updateUserRoleValidationSchema), user_controller_1.UserControllers.updateUserRole);
 // Route for deleting a user
-router.delete('/delete-user/:id', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), user_controller_1.UserControllers.deleteUser);
+router.delete('/:id/delete', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), user_controller_1.UserControllers.deleteUser);
 // Route for subscribing a user
-router.patch('/subscribe/:id', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), user_controller_1.UserControllers.subscribeUser);
+router.patch('/:id/subscribe', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), user_controller_1.UserControllers.subscribeUser);
 // Route to add a favorite company
-router.post('/:companyId/favorites', (0, protect_1.default)(), user_controller_1.UserControllers.addFavoriteCompany);
+router.post('/favorites/:companyId/add', (0, protect_1.default)(), user_controller_1.UserControllers.addFavoriteCompany);
 // Route to remove a favorite company
-router.delete('/:companyId/favorites', (0, protect_1.default)(), user_controller_1.UserControllers.removeFavoriteCompany);
+router.delete('/favorites/:companyId/remove', (0, protect_1.default)(), user_controller_1.UserControllers.removeFavoriteCompany);
+// Route to get all favorite companies
 router.get('/favorites', (0, protect_1.default)(), user_controller_1.UserControllers.getAllFavoriteCompanies);
+// Route to add a favorite credit card vendor
+router.post('/favorites/vendor/:vendorId/add', (0, protect_1.default)(), user_controller_1.UserControllers.addFavoriteCreditCardVendor);
+// Route to remove a favorite credit card vendor
+router.delete('/favorites/vendor/:vendorId/remove', (0, protect_1.default)(), user_controller_1.UserControllers.removeFavoriteCreditCardVendor);
+// Route to get the currently logged-in user's information
 router.get('/me', (0, protect_1.default)(), user_controller_1.UserControllers.getMe);
+// Route to get all users (admin and super admin access only)
+router.get('/', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), user_controller_1.UserControllers.getAllUsers);
+// Route to get all favorite credit card vendors
+router.get('/favorites/vendors', (0, protect_1.default)(), user_controller_1.UserControllers.getAllFavoriteCreditCardVendors);
 exports.UserRoutes = router;
