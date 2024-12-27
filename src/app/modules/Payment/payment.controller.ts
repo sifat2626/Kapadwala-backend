@@ -207,9 +207,7 @@ const stripeWebhook: RequestHandler = catchAsync(async (req, res) => {
     })
   }
 
-  const stripe = new Stripe(config.stripe_secret_key as string, {
-    apiVersion: '2024-11-20.acacia',
-  })
+  const stripe = new Stripe(config.stripe_secret_key as string)
 
   let event: Stripe.Event
 
