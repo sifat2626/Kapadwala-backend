@@ -11,7 +11,7 @@ const router = express.Router()
 
 // Route for creating a new user
 router.post(
-  '/create',
+  '/create-user',
   validateRequest(UserValidation.userValidationSchema),
   UserControllers.createUser,
 )

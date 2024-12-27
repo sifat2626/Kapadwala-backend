@@ -14,7 +14,7 @@ const protect_1 = __importDefault(require("../../middlewares/protect"));
 const limitUnSubscribedUser_1 = __importDefault(require("../../middlewares/limitUnSubscribedUser"));
 const router = express_1.default.Router();
 // Route for creating a new user
-router.post('/create', (0, validateRequest_1.default)(user_validation_1.UserValidation.userValidationSchema), user_controller_1.UserControllers.createUser);
+router.post('/create-user', (0, validateRequest_1.default)(user_validation_1.UserValidation.userValidationSchema), user_controller_1.UserControllers.createUser);
 // Route for changing a user's role
 router.patch('/:id/change-role', (0, auth_1.default)(user_constant_1.USER_ROLE.admin, user_constant_1.USER_ROLE.superAdmin), (0, validateRequest_1.default)(user_validation_1.UserValidation.updateUserRoleValidationSchema), user_controller_1.UserControllers.updateUserRole);
 // Route for deleting a user
