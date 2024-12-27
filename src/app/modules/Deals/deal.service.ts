@@ -217,7 +217,7 @@ const getTopDeals = async (query: any = {}): Promise<any> => {
   const limit = parseInt(query.limit, 10) || 10
   const skip = (page - 1) * limit
 
-  // Fetch the best non-expired cashback deals
+  // Fetch the best non-expired cashback deals and populate vendor details
   const cashbackDeals = await Deal.aggregate([
     {
       $match: {
@@ -230,7 +230,17 @@ const getTopDeals = async (query: any = {}): Promise<any> => {
     { $group: { _id: '$companyId', bestCashbackDeal: { $first: '$$ROOT' } } },
   ])
 
-  // Fetch the best non-expired gift card deals
+  const cashbackDealIds = cashbackDeals.map((deal) => deal.bestCashbackDeal._id)
+
+  const populatedCashbackDeals = await Deal.find({
+    _id: { $in: cashbackDealIds },
+  }).populate('vendorId', 'name logo website')
+
+  const cashbackMap = new Map(
+    populatedCashbackDeals.map((deal) => [deal.companyId.toString(), deal]),
+  )
+
+  // Fetch the best non-expired gift card deals and populate vendor details
   const giftcardDeals = await Deal.aggregate([
     {
       $match: {
@@ -243,27 +253,24 @@ const getTopDeals = async (query: any = {}): Promise<any> => {
     { $group: { _id: '$companyId', bestGiftcardDeal: { $first: '$$ROOT' } } },
   ])
 
-  // Fetch the best non-expired credit card deals
+  const giftcardDealIds = giftcardDeals.map((deal) => deal.bestGiftcardDeal._id)
+
+  const populatedGiftcardDeals = await Deal.find({
+    _id: { $in: giftcardDealIds },
+  }).populate('vendorId', 'name logo website')
+
+  const giftcardMap = new Map(
+    populatedGiftcardDeals.map((deal) => [deal.companyId.toString(), deal]),
+  )
+
+  // Fetch the best non-expired credit card deals and populate vendor details
   const creditCardDeals = await Deal.find({
     type: 'creditcard',
     isActive: true,
     expiryDate: { $gte: currentDate }, // Only fetch non-expired deals
   }).populate('vendorId', 'name logo website') // Populate vendor details
 
-  // Maps for efficient grouping
-  const cashbackMap = new Map<string, any>()
-  const giftcardMap = new Map<string, any>()
   const creditCardMap = new Map<string, any[]>()
-
-  // Fill cashback and gift card maps
-  cashbackDeals.forEach((deal) =>
-    cashbackMap.set(deal._id.toString(), deal.bestCashbackDeal),
-  )
-  giftcardDeals.forEach((deal) =>
-    giftcardMap.set(deal._id.toString(), deal.bestGiftcardDeal),
-  )
-
-  // Group credit card deals by companyId
   creditCardDeals.forEach((deal) => {
     const companyId = deal.companyId.toString()
     if (!creditCardMap.has(companyId)) creditCardMap.set(companyId, [])
