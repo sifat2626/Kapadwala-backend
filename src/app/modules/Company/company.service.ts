@@ -58,10 +58,15 @@ const uploadCompaniesFromCSV = async (buffer: Buffer) => {
 
 
 const getAllCompanies = async (query: any) => {
-  const { page = 1, limit = 10 } = query;
+  const { page = 1, limit = 10, name } = query;
   const skip = (page - 1) * Number(limit);
 
-  const companies = await Company.find()
+  const filter: any = {};
+  if (name) {
+    filter.name = { $regex: name, $options: 'i' }; // Case-insensitive partial search
+  }
+
+  const companies = await Company.find(filter)
     .skip(skip)
     .limit(Number(limit));
   const total = await Company.countDocuments();

@@ -62,9 +62,13 @@ const uploadCompaniesFromCSV = (buffer) => __awaiter(void 0, void 0, void 0, fun
     return results;
 });
 const getAllCompanies = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const { page = 1, limit = 10 } = query;
+    const { page = 1, limit = 10, name } = query;
     const skip = (page - 1) * Number(limit);
-    const companies = yield company_model_1.Company.find()
+    const filter = {};
+    if (name) {
+        filter.name = { $regex: name, $options: 'i' }; // Case-insensitive partial search
+    }
+    const companies = yield company_model_1.Company.find(filter)
         .skip(skip)
         .limit(Number(limit));
     const total = yield company_model_1.Company.countDocuments();
