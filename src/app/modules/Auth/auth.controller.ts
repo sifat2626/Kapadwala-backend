@@ -10,7 +10,7 @@ const loginUser = catchAsync(async (req, res) => {
   res.cookie('accessToken', accessToken, {
     secure: true,
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'none',
     maxAge: 1000 * 60 * 60 * 24 * 365,
   })
 
