@@ -5,6 +5,7 @@ import { Company } from '../Company/company.model'
 import { Vendor } from '../Vendor/vendor.model'
 import { getCompanyIdByName, getVendorIdByName } from '../../utils/getByName'
 import { returnWithMeta } from '../../utils/returnWithMeta'
+import { User } from '../User/user.model'
 
 interface CSVRow {
   title: string
@@ -776,6 +777,51 @@ const getAllCreditcardDeals = async (query: any): Promise<any> => {
 //   }
 // }
 
+export const getFilteredTopDeals = async (userId: string) => {
+  try {
+    const user = await User.findById(userId).populate(['favorites', 'favoriteCreditCardVendors']);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Get all top deals
+    const allTopDeals = await DealServices.getTopDeals();
+
+    // Extract favorite company and vendor IDs
+    const favoriteCompanyIds = user.favorites.map((favorite: any) => favorite._id.toString());
+    const favoriteCreditCardVendorIds = user.favoriteCreditCardVendors.map((vendor: any) =>
+      vendor._id.toString(),
+    );
+
+    // Filter top deals by favorite company IDs
+    const filteredDeals = allTopDeals.data
+      .map((deal: any) => {
+        // Filter credit card deals to include only those from favorite vendors
+        const filteredCreditCardDeals = deal.creditCardDeals.filter((creditCardDeal: any) =>
+          favoriteCreditCardVendorIds.includes(creditCardDeal.vendor._id.toString()),
+        );
+
+        // Return the deal with the filtered credit card deals
+        return {
+          ...deal,
+          creditCardDeals: filteredCreditCardDeals,
+        };
+      })
+      .filter((deal: any) => {
+        // Ensure the company is in the user's favorite companies or has valid credit card deals
+        return (
+          favoriteCompanyIds.includes(deal.company.id.toString()) ||
+          deal.creditCardDeals.length > 0
+        );
+      });
+
+    return filteredDeals;
+  } catch (error:any) {
+    throw new Error(error.message || 'Error fetching filtered deals');
+  }
+};
+
 export const DealServices = {
   getAllDeals,
   getAllActiveDeals,
@@ -789,5 +835,6 @@ export const DealServices = {
   processCSVData,
   deleteOldDeals,
   getAllCreditcardDeals,
+  getFilteredTopDeals
   // getTopDealsFromFavorites,
 }

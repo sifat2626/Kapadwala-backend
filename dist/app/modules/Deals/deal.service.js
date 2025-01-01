@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DealServices = void 0;
+exports.DealServices = exports.getFilteredTopDeals = void 0;
 const csv_parser_1 = __importDefault(require("csv-parser"));
 const stream_1 = require("stream");
 const deals_model_1 = require("./deals.model");
@@ -20,6 +20,7 @@ const company_model_1 = require("../Company/company.model");
 const vendor_model_1 = require("../Vendor/vendor.model");
 const getByName_1 = require("../../utils/getByName");
 const returnWithMeta_1 = require("../../utils/returnWithMeta");
+const user_model_1 = require("../User/user.model");
 // Process CSV Data
 const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* () {
     const deals = [];
@@ -660,6 +661,37 @@ const getAllCreditcardDeals = (query) => __awaiter(void 0, void 0, void 0, funct
 //     throw new Error('Failed to fetch top deals from favorite companies.')
 //   }
 // }
+const getFilteredTopDeals = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const user = yield user_model_1.User.findById(userId).populate(['favorites', 'favoriteCreditCardVendors']);
+        if (!user) {
+            throw new Error('User not found');
+        }
+        // Get all top deals
+        const allTopDeals = yield exports.DealServices.getTopDeals();
+        // Extract favorite company and vendor IDs
+        const favoriteCompanyIds = user.favorites.map((favorite) => favorite._id.toString());
+        const favoriteCreditCardVendorIds = user.favoriteCreditCardVendors.map((vendor) => vendor._id.toString());
+        // Filter top deals by favorite company IDs
+        const filteredDeals = allTopDeals.data
+            .map((deal) => {
+            // Filter credit card deals to include only those from favorite vendors
+            const filteredCreditCardDeals = deal.creditCardDeals.filter((creditCardDeal) => favoriteCreditCardVendorIds.includes(creditCardDeal.vendor._id.toString()));
+            // Return the deal with the filtered credit card deals
+            return Object.assign(Object.assign({}, deal), { creditCardDeals: filteredCreditCardDeals });
+        })
+            .filter((deal) => {
+            // Ensure the company is in the user's favorite companies or has valid credit card deals
+            return (favoriteCompanyIds.includes(deal.company.id.toString()) ||
+                deal.creditCardDeals.length > 0);
+        });
+        return filteredDeals;
+    }
+    catch (error) {
+        throw new Error(error.message || 'Error fetching filtered deals');
+    }
+});
+exports.getFilteredTopDeals = getFilteredTopDeals;
 exports.DealServices = {
     getAllDeals,
     getAllActiveDeals,
@@ -673,5 +705,6 @@ exports.DealServices = {
     processCSVData,
     deleteOldDeals,
     getAllCreditcardDeals,
+    getFilteredTopDeals: exports.getFilteredTopDeals
     // getTopDealsFromFavorites,
 };

@@ -299,6 +299,7 @@ const getTopDealsFromFavorites: RequestHandler = catchAsync(
 //   });
 // });
 
+
 export const DealControllers = {
   uploadDealsFromCSV,
   getAllActiveDeals,
