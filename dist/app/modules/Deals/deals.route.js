@@ -20,10 +20,18 @@ deal_controller_1.DealControllers.uploadDealsFromCSV);
 router.get('/active', (0, protect_1.default)(), (0, limitUnSubscribedUser_1.default)(), deal_controller_1.DealControllers.getAllActiveDeals);
 router.get('/cashback-rate/:companyName', (0, protect_1.default)(), (0, checkSubscription_1.default)(), deal_controller_1.DealControllers.getBestCashbackRateByCompany);
 router.get('/giftcard-rate/:companyName', (0, protect_1.default)(), deal_controller_1.DealControllers.getBestGiftcardRateByCompany);
-router.get('/creditcard/expiring-soon/:vendorName', (0, protect_1.default)(), deal_controller_1.DealControllers.getExpiringCreditcardDealsByVendor);
-router.get('/giftcard/active', (0, protect_1.default)(), deal_controller_1.DealControllers.getActiveGiftcardDeals);
-router.get('/cashback/active', (0, protect_1.default)(), deal_controller_1.DealControllers.getActiveCashbackDeals);
-router.get('/creditcard/active', (0, protect_1.default)(), deal_controller_1.DealControllers.getActiveCreditcardDeals);
+router.get('/creditcard/expiring-soon/:vendorName', 
+// protect(),
+deal_controller_1.DealControllers.getExpiringCreditcardDealsByVendor);
+router.get('/giftcard/active', 
+// protect(),
+deal_controller_1.DealControllers.getActiveGiftcardDeals);
+router.get('/cashback/active', 
+// protect(),
+deal_controller_1.DealControllers.getActiveCashbackDeals);
+router.get('/creditcard/active', 
+// protect(),
+deal_controller_1.DealControllers.getActiveCreditcardDeals);
 router.get('/creditcard/all', (0, protect_1.default)(), deal_controller_1.DealControllers.getAllCreditcardDeals);
 // Get all deals
 router.get('/', (0, protect_1.default)(), 

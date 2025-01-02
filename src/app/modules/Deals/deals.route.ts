@@ -39,25 +39,25 @@ router.get(
 
 router.get(
   '/creditcard/expiring-soon/:vendorName',
-  protect(),
+  // protect(),
   DealControllers.getExpiringCreditcardDealsByVendor,
 )
 
 router.get(
   '/giftcard/active',
-  protect(),
+  // protect(),
   DealControllers.getActiveGiftcardDeals,
 )
 
 router.get(
   '/cashback/active',
-  protect(),
+  // protect(),
   DealControllers.getActiveCashbackDeals,
 )
 
 router.get(
   '/creditcard/active',
-  protect(),
+  // protect(),
   DealControllers.getActiveCreditcardDeals,
 )
 
