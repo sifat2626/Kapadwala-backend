@@ -701,6 +701,40 @@ const getFilteredTopDeals = (userId) => __awaiter(void 0, void 0, void 0, functi
     }
 });
 exports.getFilteredTopDeals = getFilteredTopDeals;
+const getFavoriteDeals = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    // Fetch user's favorite companies
+    const user = yield user_model_1.User.findById(userId)
+        .populate({
+        path: 'favorites',
+        select: 'name description logo website', // Fields for companies
+    })
+        .populate({
+        path: 'favoriteCreditCardVendors',
+        select: 'name logo website description', // Fields for vendors
+    })
+        .select('favorites favoriteCreditCardVendors');
+    if (!user) {
+        throw new Error('User not found');
+    }
+    const { favorites: favoriteCompanies, favoriteCreditCardVendors } = user;
+    // Fetch deals filtered by favorite companies and credit card vendors
+    const favoriteDeals = yield deals_model_1.Deal.find({
+        $or: [
+            { 'company._id': { $in: favoriteCompanies.map((company) => company._id) } },
+            {
+                creditCardDeals: {
+                    $elemMatch: { 'vendor._id': { $in: favoriteCreditCardVendors.map((vendor) => vendor._id) } },
+                },
+            },
+            {
+                cashbackDeals: {
+                    $elemMatch: { 'vendor._id': { $in: favoriteCreditCardVendors.map((vendor) => vendor._id) } },
+                },
+            },
+        ],
+    });
+    return { companies: favoriteCompanies, vendors: favoriteCreditCardVendors, deals: favoriteDeals };
+});
 exports.DealServices = {
     getAllDeals,
     getAllActiveDeals,
@@ -714,6 +748,7 @@ exports.DealServices = {
     processCSVData,
     deleteOldDeals,
     getAllCreditcardDeals,
-    getFilteredTopDeals: exports.getFilteredTopDeals
+    getFilteredTopDeals: exports.getFilteredTopDeals,
+    getFavoriteDeals
     // getTopDealsFromFavorites,
 };

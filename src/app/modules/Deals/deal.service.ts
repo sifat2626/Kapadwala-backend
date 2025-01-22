@@ -6,6 +6,8 @@ import { Vendor } from '../Vendor/vendor.model'
 import { getCompanyIdByName, getVendorIdByName } from '../../utils/getByName'
 import { returnWithMeta } from '../../utils/returnWithMeta'
 import { User } from '../User/user.model'
+import { CompanyService } from '../Company/company.service'
+import { UserServices } from '../User/user.service'
 
 interface CSVRow {
   title: string
@@ -826,6 +828,48 @@ export const getFilteredTopDeals = async (userId: string) => {
   }
 };
 
+const getFavoriteDeals = async (userId: string) => {
+  // Fetch user's favorite companies
+  const user = await User.findById(userId)
+    .populate({
+      path: 'favorites',
+      select: 'name description logo website', // Fields for companies
+    })
+    .populate({
+      path: 'favoriteCreditCardVendors',
+      select: 'name logo website description', // Fields for vendors
+    })
+    .select('favorites favoriteCreditCardVendors');
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const { favorites: favoriteCompanies, favoriteCreditCardVendors } = user;
+
+  // Fetch deals filtered by favorite companies and credit card vendors
+  const favoriteDeals = await Deal.find({
+    $or: [
+      { 'company._id': { $in: favoriteCompanies.map((company: any) => company._id) } },
+      {
+        creditCardDeals: {
+          $elemMatch: { 'vendor._id': { $in: favoriteCreditCardVendors.map((vendor: any) => vendor._id) } },
+        },
+      },
+      {
+        cashbackDeals: {
+          $elemMatch: { 'vendor._id': { $in: favoriteCreditCardVendors.map((vendor: any) => vendor._id) } },
+        },
+      },
+    ],
+  });
+
+  return { companies: favoriteCompanies, vendors: favoriteCreditCardVendors, deals: favoriteDeals };
+};
+
+
+
+
 export const DealServices = {
   getAllDeals,
   getAllActiveDeals,
@@ -839,6 +883,7 @@ export const DealServices = {
   processCSVData,
   deleteOldDeals,
   getAllCreditcardDeals,
-  getFilteredTopDeals
+  getFilteredTopDeals,
+  getFavoriteDeals
   // getTopDealsFromFavorites,
 }
