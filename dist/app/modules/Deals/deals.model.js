@@ -3,11 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Deal = void 0;
 const mongoose_1 = require("mongoose");
 const dealSchema = new mongoose_1.Schema({
-    title: {
-        type: String,
-        required: [true, 'Deal title is required'],
-        trim: true,
-    },
     percentage: {
         type: Number,
         min: [0, 'Percentage cannot be less than 0'],

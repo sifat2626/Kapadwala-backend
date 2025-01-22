@@ -3,11 +3,6 @@ import { TDeal, DealModel } from './deals.type';
 
 const dealSchema = new Schema<TDeal, DealModel>(
   {
-    title: {
-      type: String,
-      required: [true, 'Deal title is required'],
-      trim: true,
-    },
     percentage: {
       type: Number,
       min: [0, 'Percentage cannot be less than 0'],

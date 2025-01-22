@@ -48,29 +48,39 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
     existingCompanies.forEach((company) => companyMap.set(company.name, company._id));
     existingVendors.forEach((vendor) => vendorMap.set(vendor.name, vendor._id));
     for (const deal of deals) {
-        const { title, percentage = 0, type, vendorName, companyName, expiryDate, link, } = deal;
+        const { percentage = 0, type, vendorName, companyName, expiryDate, link, } = deal;
         // Validate mandatory fields
-        if (!title ||
-            !type ||
-            !vendorName ||
-            !companyName ||
-            !expiryDate ||
-            !link) {
+        if (!type || !vendorName || !companyName || !link) {
             invalidDeals.push(deal);
             continue;
         }
         // Parse expiryDate to handle both `DD/MM/YYYY` and `YYYY-MM-DD` formats
         let parsedExpiryDate = null;
-        if (expiryDate.includes('/')) {
+        if (!expiryDate) {
+            // Set expiry date as "forever" (a very distant future date) for missing or non-string expiry dates
+            parsedExpiryDate = new Date('9999-12-31');
+        }
+        else if (expiryDate.includes('/')) {
             // Handle DD/MM/YYYY format
             const [day, month, year] = expiryDate.split('/');
             if (day && month && year) {
                 parsedExpiryDate = new Date(`${year}-${month}-${day}`);
             }
+            else {
+                parsedExpiryDate = new Date('9999-12-31'); // Default to "forever"
+            }
         }
         else if (expiryDate.includes('-')) {
             // Handle YYYY-MM-DD format
             parsedExpiryDate = new Date(expiryDate);
+            if (isNaN(parsedExpiryDate.getTime())) {
+                parsedExpiryDate = new Date('9999-12-31'); // Default to "forever"
+            }
+        }
+        else {
+            // If format is not recognized, log the unrecognized format and set expiry date to "forever"
+            console.warn(`Unrecognized expiry date format: ${expiryDate}. Setting to 'forever'.`);
+            parsedExpiryDate = new Date('9999-12-31');
         }
         // Check if expiryDate is valid
         if (!parsedExpiryDate || isNaN(parsedExpiryDate.getTime())) {
@@ -101,7 +111,7 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
             vendorMap.set(vendorName, vendorId);
             results.newVendors++;
         }
-        const existingDeal = yield deals_model_1.Deal.findOne({ title, vendorId, companyId });
+        const existingDeal = yield deals_model_1.Deal.findOne({ vendorId, companyId });
         if (existingDeal) {
             existingDeal.percentage = percentage;
             existingDeal.expiryDate = parsedExpiryDate;
@@ -112,7 +122,6 @@ const processCSVData = (buffer) => __awaiter(void 0, void 0, void 0, function* (
         }
         else {
             yield deals_model_1.Deal.create({
-                title,
                 percentage: type === 'creditcard' ? undefined : percentage, // Allow undefined for creditcard
                 type,
                 vendorId,

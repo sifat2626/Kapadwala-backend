@@ -19,19 +19,19 @@ interface CSVRow {
 
 // Process CSV Data
 const processCSVData = async (buffer: any): Promise<string> => {
-  const deals: CSVRow[] = []
-  const invalidDeals: CSVRow[] = []
+  const deals: CSVRow[] = [];
+  const invalidDeals: CSVRow[] = [];
 
   await new Promise<void>((resolve, reject) => {
-    const bufferStream = new PassThrough()
-    bufferStream.end(buffer)
+    const bufferStream = new PassThrough();
+    bufferStream.end(buffer);
 
     bufferStream
       .pipe(csvParser())
       .on('data', (row: CSVRow) => deals.push(row))
       .on('end', resolve)
-      .on('error', reject)
-  })
+      .on('error', reject);
+  });
 
   const results = {
     createdDeals: 0,
@@ -39,101 +39,104 @@ const processCSVData = async (buffer: any): Promise<string> => {
     newCompanies: 0,
     newVendors: 0,
     invalidExpiryDates: 0,
-  }
+  };
 
-  const companyMap = new Map<string, string>()
-  const vendorMap = new Map<string, string>()
+  const companyMap = new Map<string, string>();
+  const vendorMap = new Map<string, string>();
 
-  const existingCompanies = await Company.find()
-  const existingVendors = await Vendor.find()
+  const existingCompanies = await Company.find();
+  const existingVendors = await Vendor.find();
 
   existingCompanies.forEach((company) =>
-    companyMap.set(company.name, company._id),
-  )
-  existingVendors.forEach((vendor) => vendorMap.set(vendor.name, vendor._id))
+    companyMap.set(company.name, company._id)
+  );
+  existingVendors.forEach((vendor) => vendorMap.set(vendor.name, vendor._id));
 
   for (const deal of deals) {
     const {
-      title,
       percentage = 0,
       type,
       vendorName,
       companyName,
       expiryDate,
       link,
-    } = deal
+    } = deal;
 
     // Validate mandatory fields
-    if (
-      !title ||
-      !type ||
-      !vendorName ||
-      !companyName ||
-      !expiryDate ||
-      !link
-    ) {
-      invalidDeals.push(deal)
-      continue
+    if (!type || !vendorName || !companyName || !link) {
+      invalidDeals.push(deal);
+      continue;
     }
 
     // Parse expiryDate to handle both `DD/MM/YYYY` and `YYYY-MM-DD` formats
-    let parsedExpiryDate: Date | null = null
+    let parsedExpiryDate: Date | null = null;
 
-    if (expiryDate.includes('/')) {
+    if (!expiryDate ) {
+      // Set expiry date as "forever" (a very distant future date) for missing or non-string expiry dates
+      parsedExpiryDate = new Date('9999-12-31');
+    } else if (expiryDate.includes('/')) {
       // Handle DD/MM/YYYY format
-      const [day, month, year] = expiryDate.split('/')
+      const [day, month, year] = expiryDate.split('/');
       if (day && month && year) {
-        parsedExpiryDate = new Date(`${year}-${month}-${day}`)
+        parsedExpiryDate = new Date(`${year}-${month}-${day}`);
+      } else {
+        parsedExpiryDate = new Date('9999-12-31'); // Default to "forever"
       }
     } else if (expiryDate.includes('-')) {
       // Handle YYYY-MM-DD format
-      parsedExpiryDate = new Date(expiryDate)
+      parsedExpiryDate = new Date(expiryDate);
+      if (isNaN(parsedExpiryDate.getTime())) {
+        parsedExpiryDate = new Date('9999-12-31'); // Default to "forever"
+      }
+    } else {
+      // If format is not recognized, log the unrecognized format and set expiry date to "forever"
+      console.warn(`Unrecognized expiry date format: ${expiryDate}. Setting to 'forever'.`);
+      parsedExpiryDate = new Date('9999-12-31');
     }
 
     // Check if expiryDate is valid
     if (!parsedExpiryDate || isNaN(parsedExpiryDate.getTime())) {
-      console.error(`Invalid expiry date for deal: ${JSON.stringify(deal)}`)
-      results.invalidExpiryDates++
-      invalidDeals.push(deal)
-      continue
+      console.error(`Invalid expiry date for deal: ${JSON.stringify(deal)}`);
+      results.invalidExpiryDates++;
+      invalidDeals.push(deal);
+      continue;
     }
 
-    let companyId = companyMap.get(companyName)
+    let companyId = companyMap.get(companyName);
     if (!companyId) {
       const newCompany = await Company.create({
         name: companyName,
         logo: '',
         website: '',
-      })
-      companyId = newCompany._id
-      companyMap.set(companyName, companyId)
-      results.newCompanies++
+      });
+      companyId = newCompany._id;
+      companyMap.set(companyName, companyId);
+      results.newCompanies++;
     }
 
-    let vendorId = vendorMap.get(vendorName)
+    let vendorId = vendorMap.get(vendorName);
     if (!vendorId) {
       const newVendor = await Vendor.create({
         name: vendorName,
         logo: '',
         website: '',
-      })
-      vendorId = newVendor._id
-      vendorMap.set(vendorName, vendorId)
-      results.newVendors++
+      });
+      vendorId = newVendor._id;
+      vendorMap.set(vendorName, vendorId);
+      results.newVendors++;
     }
 
-    const existingDeal = await Deal.findOne({ title, vendorId, companyId })
+    const existingDeal = await Deal.findOne({ vendorId, companyId });
 
     if (existingDeal) {
-      existingDeal.percentage = percentage
-      existingDeal.expiryDate = parsedExpiryDate
-      existingDeal.link = link
-      existingDeal.isActive = parsedExpiryDate > new Date()
-      await existingDeal.save()
-      results.updatedDeals++
+      existingDeal.percentage = percentage;
+      existingDeal.expiryDate = parsedExpiryDate;
+      existingDeal.link = link;
+      existingDeal.isActive = parsedExpiryDate > new Date();
+      await existingDeal.save();
+      results.updatedDeals++;
     } else {
       await Deal.create({
-        title,
         percentage: type === 'creditcard' ? undefined : percentage, // Allow undefined for creditcard
         type,
         vendorId,
@@ -141,13 +144,14 @@ const processCSVData = async (buffer: any): Promise<string> => {
         expiryDate: parsedExpiryDate,
         link,
         isActive: parsedExpiryDate > new Date(),
-      })
-      results.createdDeals++
+      });
+      results.createdDeals++;
     }
   }
 
-  return `Processed ${deals.length} deals.\nDetails: ${JSON.stringify(results)}\nInvalid Deals: ${invalidDeals.length}`
-}
+  return `Processed ${deals.length} deals.\nDetails: ${JSON.stringify(results)}\nInvalid Deals: ${invalidDeals.length}`;
+};
+
 
 // Fetch All Deals
 const getAllDeals = async (query: any): Promise<any> => {
